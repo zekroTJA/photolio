@@ -9,10 +9,26 @@ namespace backend.Models
         public string Id { get; set; }
 
         [JsonPropertyName("name")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string Name { get; set; }
 
+        [JsonPropertyName("blurhash")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public BlurHash BlurHash { get; set; }
+
+        [JsonPropertyName("dimenisons")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dimensions Dimenisons { get; set; }
+
         [JsonPropertyName("exif")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public ExifModel Exif { get; set; }
+
+        public ImageModel Simplify()
+        {
+            Exif = null;
+            return this;
+        }
     }
 
     public class ExifModel
@@ -40,5 +56,26 @@ namespace backend.Models
 
         [JsonPropertyName("bodymake")]
         public string BodyMake { get; set; }
+    }
+
+    public class Dimensions
+    {
+        [JsonPropertyName("width")]
+        public int Width { get; set; }
+
+        [JsonPropertyName("height")]
+        public int Height { get; set; }
+
+        [JsonPropertyName("ratio")]
+        public double Ratio { get => (double)Width / Height; }
+    }
+
+    public class BlurHash
+    {
+        [JsonPropertyName("hash")]
+        public string Hash { get; set; }
+
+        [JsonPropertyName("components")]
+        public Dimensions Components { get; set; }
     }
 }

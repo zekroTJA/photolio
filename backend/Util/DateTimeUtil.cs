@@ -20,7 +20,7 @@ namespace backend.Util
             (int y, int m, int d) = SplitTripel(sdate);
             (int H, int M, int S) = SplitTripel(stime);
 
-            return new DateTimeOffset(y, M, d, H, M, S, TimeSpan.Zero);
+            return new DateTimeOffset(y, m, d, H, M, S, TimeSpan.Zero);
         }
 
         /// <summary>

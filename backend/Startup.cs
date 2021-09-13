@@ -37,10 +37,12 @@ namespace backend
 
             app.UseEndpoints(endpoints => endpoints.MapControllers());
 
-            // Initialize image service to check configuration
-            // and to initialize storage.
-            app.ApplicationServices.GetService<IImageService>()
-                .EnsureStorageBuckets();
+            // Initialize image service to check configuration,
+            // to initialize storage and to pre-cache available
+            // image metadata.
+            var imgService = app.ApplicationServices.GetService<IImageService>();
+            imgService.EnsureStorageBuckets();
+            imgService.List();
         }
     }
 }

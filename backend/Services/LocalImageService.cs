@@ -1,9 +1,7 @@
-﻿using System;
-using System.Threading;
-using System.Runtime.CompilerServices;
+﻿using System.Collections.Concurrent;
+using System;
+using BlurhashDrawing = System.Drawing.Common.Blurhash;
 using System.Threading.Tasks;
-using System.Net;
-using System.Net.Mime;
 using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +22,8 @@ namespace backend.Services
         private readonly string imageLocation;
         private readonly string thumbnailLocation;
 
+        private readonly ConcurrentDictionary<string, ImageModel> metaCache = new();
+
         public LocalImageService(IConfiguration config)
         {
             imageLocation = config.MustGetValue<string>("Storage:Locations:Content");
@@ -36,47 +36,59 @@ namespace backend.Services
             System.IO.Directory.CreateDirectory(this.thumbnailLocation);
         }
 
-        public IEnumerable<string> List()
+        public IEnumerable<ImageModel> List()
         {
             var files = System.IO.Directory.GetFiles(this.imageLocation)
-                .Select((file) => Path.GetFileName(file));
+                .Select((filePath) => Path.GetFileName(filePath))
+                .Select((id) => Details(id).Simplify());
 
             return files;
         }
 
         public ImageModel Details(string id)
         {
-            var fileName = ImagePath(id);
-            if (!File.Exists(fileName))
-                throw new FileNotFoundException();
-
-            var image = new ImageModel
+            return metaCache.GetOrAdd(id, (_) =>
             {
-                Id = id,
-                Exif = new ExifModel(),
-            };
+                var fileName = ImagePath(id);
+                var image = Image.FromFile(fileName);
+                var meta = new ImageModel
+                {
+                    Id = id,
+                    Exif = new ExifModel(),
+                    BlurHash = new BlurHash
+                    {
+                        Hash = new BlurhashDrawing.Encoder().Encode(image, 4, 4),
+                        Components = new Dimensions { Width = 4, Height = 4 }
+                    },
+                    Dimenisons = new Dimensions
+                    {
+                        Height = image.Height,
+                        Width = image.Width,
+                    }
+                };
 
-            var meta = ImageMetadataReader.ReadMetadata(fileName);
+                var metadata = ImageMetadataReader.ReadMetadata(fileName);
 
-            var exifSubIfd = meta.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-            if (exifSubIfd != null)
-            {
-                image.Exif.FStop = exifSubIfd.GetDescription(ExifDirectoryBase.TagModel);
-                image.Exif.Iso = exifSubIfd.GetDescription(ExifDirectoryBase.TagIsoEquivalent);
-                image.Exif.ExposureTime = exifSubIfd.GetDescription(ExifDirectoryBase.TagExposureTime);
-                image.Exif.Taken = DateTimeUtil.ParseExif(exifSubIfd.GetDescription(ExifDirectoryBase.TagDateTimeOriginal));
-                image.Exif.LensModel = exifSubIfd.GetDescription(ExifDirectoryBase.TagLensModel);
-                image.Exif.LensMake = exifSubIfd.GetDescription(ExifDirectoryBase.TagLensMake);
-            }
+                var exifSubIfd = metadata.OfType<ExifSubIfdDirectory>().FirstOrDefault();
+                if (exifSubIfd != null)
+                {
+                    meta.Exif.FStop = exifSubIfd.GetDescription(ExifDirectoryBase.TagModel);
+                    meta.Exif.Iso = exifSubIfd.GetDescription(ExifDirectoryBase.TagIsoEquivalent);
+                    meta.Exif.ExposureTime = exifSubIfd.GetDescription(ExifDirectoryBase.TagExposureTime);
+                    meta.Exif.Taken = DateTimeUtil.ParseExif(exifSubIfd.GetDescription(ExifDirectoryBase.TagDateTimeOriginal));
+                    meta.Exif.LensModel = exifSubIfd.GetDescription(ExifDirectoryBase.TagLensModel);
+                    meta.Exif.LensMake = exifSubIfd.GetDescription(ExifDirectoryBase.TagLensMake);
+                }
 
-            var exifIfd0 = meta.OfType<ExifIfd0Directory>().FirstOrDefault();
-            if (exifIfd0 != null)
-            {
-                image.Exif.BodyModel = exifIfd0.GetDescription(ExifDirectoryBase.TagModel);
-                image.Exif.BodyMake = exifIfd0.GetDescription(ExifDirectoryBase.TagMake);
-            }
+                var exifIfd0 = metadata.OfType<ExifIfd0Directory>().FirstOrDefault();
+                if (exifIfd0 != null)
+                {
+                    meta.Exif.BodyModel = exifIfd0.GetDescription(ExifDirectoryBase.TagModel);
+                    meta.Exif.BodyMake = exifIfd0.GetDescription(ExifDirectoryBase.TagMake);
+                }
 
-            return image;
+                return meta;
+            });
         }
 
         public (Stream fs, string mimeType) Data(string id)

@@ -13,10 +13,11 @@ namespace backend.Services
         void EnsureStorageBuckets();
 
         /// <summary>
-        /// Returns a list of image IDs available.
+        /// Returns a simplified list of image 
+        /// models available.
         /// </summary>
         /// <returns></returns>
-        IEnumerable<string> List();
+        IEnumerable<ImageModel> List();
 
         /// <summary>
         /// Returns details of a given image by ID.
