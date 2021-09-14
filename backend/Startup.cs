@@ -2,8 +2,8 @@ using backend.Middleware;
 using backend.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace backend
 {
@@ -21,15 +21,13 @@ namespace backend
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
+            var config = app.ApplicationServices.GetService<IConfiguration>();
+            var allowOrigins = config.GetValue<string>("WebServer:CORS:AllowOrigins");
+            if (string.IsNullOrWhiteSpace(allowOrigins))
                 app.UseCors(c =>
-                    c
-                        .WithOrigins("http://localhost:3000")
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials());
-            }
+                    c.WithOrigins(allowOrigins)
+                     .AllowAnyMethod()
+                     .AllowAnyHeader());
 
             app.UseExceptionHandler(err => err.UseErrorMiddleware());
 

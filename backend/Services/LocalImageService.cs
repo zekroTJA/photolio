@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System;
 using BlurhashDrawing = System.Drawing.Common.Blurhash;
 using System.Threading.Tasks;
 using System.Drawing;
