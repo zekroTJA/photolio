@@ -56,7 +56,6 @@ namespace backend.Services
                 var meta = new ImageModel
                 {
                     Id = id,
-                    Exif = new ExifModel(),
                     BlurHash = new BlurHash
                     {
                         Hash = new BlurhashDrawing.Encoder().Encode(image, 4, 4),
@@ -81,6 +80,8 @@ namespace backend.Services
                 var exifSubIfd = metadata.OfType<ExifSubIfdDirectory>().FirstOrDefault();
                 if (exifSubIfd != null)
                 {
+                    meta.InitExif();
+
                     meta.Exif.FStop = exifSubIfd.GetDescription(ExifDirectoryBase.TagFNumber);
                     meta.Exif.Iso = exifSubIfd.GetDescription(ExifDirectoryBase.TagIsoEquivalent);
                     meta.Exif.ExposureTime = exifSubIfd.GetDescription(ExifDirectoryBase.TagExposureTime);
@@ -94,6 +95,8 @@ namespace backend.Services
                 var exifIfd0 = metadata.OfType<ExifIfd0Directory>().FirstOrDefault();
                 if (exifIfd0 != null)
                 {
+                    meta.InitExif();
+
                     meta.Exif.BodyModel = exifIfd0.GetDescription(ExifDirectoryBase.TagModel);
                     meta.Exif.BodyMake = exifIfd0.GetDescription(ExifDirectoryBase.TagMake);
                 }

@@ -36,6 +36,11 @@ namespace backend.Models
             BlurHash = BlurHash,
             Dimenisons = Dimenisons,
         };
+
+        public void InitExif()
+        {
+            if (Exif == null) Exif = new ExifModel();
+        }
     }
 
     public class ExifModel
