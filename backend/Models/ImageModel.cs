@@ -16,7 +16,7 @@ namespace backend.Models
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public BlurHash BlurHash { get; set; }
 
-        [JsonPropertyName("dimenisons")]
+        [JsonPropertyName("dimensions")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Dimensions Dimenisons { get; set; }
 
