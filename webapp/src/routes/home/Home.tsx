@@ -4,6 +4,7 @@ import ImageService from 'services/ImageService';
 import { BlurHashWrapper } from 'components/BlurHashWrapper';
 import styled from 'styled-components';
 import Masonry from 'react-masonry-css';
+import { useHistory } from 'react-router';
 
 const IMAGE_SIZE = 250;
 const IMAGE_MARGIN = 5;
@@ -33,6 +34,7 @@ const Grid = styled(Masonry)`
 
 export const HomeRoute: React.FC = () => {
   const [images, setImages] = useState<ImageModel[]>();
+  const history = useHistory();
 
   useEffect(() => {
     ImageService.list().then(setImages);
@@ -44,6 +46,7 @@ export const HomeRoute: React.FC = () => {
       image={img}
       width={IMAGE_SIZE}
       imageURL={ImageService.getThumbnailSource(img.id, IMAGE_SIZE)}
+      onClick={(id) => history.push(`/images/${id}`)}
     />
   ));
 

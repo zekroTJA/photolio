@@ -9,20 +9,28 @@ interface ImageProps {
 }
 
 interface OptDimensions {
-  height?: number;
-  width?: number;
+  height?: string | number;
+  width?: string | number;
 }
 
-interface Props extends ImageProps, OptDimensions {
+interface Events {
+  onClick?: (id: string) => void;
+}
+
+interface Props extends ImageProps, OptDimensions, Events {
   image: ImageModel;
 }
 
-const BlurhashContainer = styled(Blurhash)<{ state: string }>`
+const BlurhashContainer = styled(Blurhash)<{
+  state: string;
+  clickable: boolean;
+}>`
   position: absolute !important;
   top: 0;
   left: 0;
   transition: opacity 0.25s ease;
   opacity: ${(p) => (p.state === 'exited' ? 0 : 1)};
+  cursor: ${(p) => (p.clickable ? 'pointer' : 'auto')};
 `;
 
 const Container = styled.div`
@@ -34,14 +42,21 @@ export const BlurHashWrapper: React.FC<Props> = ({
   imageURL,
   height,
   width,
+  onClick,
 }) => {
   const [loaded, setLoaded] = useState(false);
 
-  if (!height) height = Math.floor(width! * (1 / image.dimensions.ratio));
-  else width = Math.floor(height! * image.dimensions.ratio);
+  const calcHeight =
+    !height && typeof width === 'number'
+      ? Math.floor(width! * (1 / image.dimensions.ratio))
+      : null;
+  const calcWidth =
+    !width && typeof width === 'number'
+      ? Math.floor(width! * image.dimensions.ratio)
+      : null;
 
   return (
-    <Container>
+    <Container onClick={() => onClick?.call(this, image.id)}>
       <img
         src={imageURL}
         width={width}
@@ -52,11 +67,12 @@ export const BlurHashWrapper: React.FC<Props> = ({
         {(state) => (
           <BlurhashContainer
             hash={image.blurhash.hash}
-            width={width}
-            height={height}
+            width={width ?? calcWidth ?? '100%'}
+            height={height ?? calcHeight ?? '100%'}
             resolutionX={image.blurhash.components.width}
             resolutionY={image.blurhash.components.height}
             state={state}
+            clickable={!!onClick}
           />
         )}
       </Transition>
