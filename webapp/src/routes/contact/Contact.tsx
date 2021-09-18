@@ -1,9 +1,9 @@
 import { PaddingContainer } from 'components/PaddingContainer';
 
-export const AboutRoute: React.FC = () => {
+export const ContactRoute: React.FC = () => {
   return (
     <PaddingContainer>
-      <div>About</div>
+      <div>Contact</div>
     </PaddingContainer>
   );
 };

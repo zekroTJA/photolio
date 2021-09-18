@@ -1,7 +1,8 @@
 import { Header } from 'components/Header';
 import { PageContainer } from 'components/PageContainer';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Redirect, Route } from 'react-router-dom';
 import { AboutRoute } from 'routes/about/About';
+import { ContactRoute } from 'routes/contact/Contact';
 import { createGlobalStyle } from 'styled-components';
 import { HomeRoute } from './routes/home/Home';
 
@@ -17,6 +18,8 @@ function App() {
           <Header />
           <Route exact path="/" component={HomeRoute} />
           <Route exact path="/about" component={AboutRoute} />
+          <Route exact path="/contact" component={ContactRoute} />
+          <Route path="/" render={() => <Redirect to="/" />} />
         </PageContainer>
       </Router>
       <GlobalStyle />

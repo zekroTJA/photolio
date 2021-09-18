@@ -102,6 +102,7 @@ export const Header: React.FC = () => {
       <Controls>
         <ControlLink to="/" title="Gallery" />
         <ControlLink to="/about" title="About" />
+        <ControlLink to="/contact" title="Contact" />
       </Controls>
     </Container>
   );
