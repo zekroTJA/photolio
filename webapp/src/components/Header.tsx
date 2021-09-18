@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useHistory, useLocation } from 'react-router-dom';
 import { Transition } from 'react-transition-group';
 import styled from 'styled-components';
 
@@ -19,6 +19,8 @@ const Container = styled.div`
 `;
 
 const Icon = styled.div`
+  cursor: pointer;
+
   > * {
     margin: 0;
     font-family: 'Montserrat', sans-serif;
@@ -93,9 +95,11 @@ const ControlLink: React.FC<{ to: string; title: string }> = ({
 };
 
 export const Header: React.FC = () => {
+  const history = useHistory();
+
   return (
     <Container>
-      <Icon>
+      <Icon onClick={() => history.push('/')}>
         <h1>zekro</h1>
         <h2>Photography</h2>
       </Icon>
