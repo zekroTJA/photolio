@@ -24,11 +24,13 @@ namespace backend.Models
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public ExifModel Exif { get; set; }
 
-        public ImageModel Simplify()
+        public ImageModel Simplify() => new ImageModel
         {
-            Exif = null;
-            return this;
-        }
+            Id = Id,
+            Name = Name,
+            BlurHash = BlurHash,
+            Dimenisons = Dimenisons,
+        };
     }
 
     public class ExifModel

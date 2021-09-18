@@ -71,7 +71,7 @@ namespace backend.Services
                 var exifSubIfd = metadata.OfType<ExifSubIfdDirectory>().FirstOrDefault();
                 if (exifSubIfd != null)
                 {
-                    meta.Exif.FStop = exifSubIfd.GetDescription(ExifDirectoryBase.TagModel);
+                    meta.Exif.FStop = exifSubIfd.GetDescription(ExifDirectoryBase.TagFNumber);
                     meta.Exif.Iso = exifSubIfd.GetDescription(ExifDirectoryBase.TagIsoEquivalent);
                     meta.Exif.ExposureTime = exifSubIfd.GetDescription(ExifDirectoryBase.TagExposureTime);
                     meta.Exif.Taken = DateTimeUtil.ParseExif(exifSubIfd.GetDescription(ExifDirectoryBase.TagDateTimeOriginal));
