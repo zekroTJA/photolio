@@ -7,16 +7,13 @@ import Masonry from 'react-masonry-css';
 
 const IMAGE_SIZE = 250;
 const IMAGE_MARGIN = 5;
-
-// cols = w / (IMAGE_SIZE + 2 * IMAGE_MARGIN)
-// w = cols * (IMAGE_SIZE + 2 * IMAGE_MARGIN)
+const MAX_COLUMNS = 5;
 
 const GRID_BREAKPOINTS = (() => {
-  const max = 5;
   const breakpoints: { [key: number | string]: number } = {
-    default: max,
+    default: MAX_COLUMNS,
   };
-  for (let i = 1; i <= max; i++)
+  for (let i = 1; i <= MAX_COLUMNS; i++)
     breakpoints[i * (IMAGE_SIZE + 2 * IMAGE_MARGIN)] = i - 1;
   return breakpoints;
 })();
