@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using BlurhashDrawing = System.Drawing.Common.Blurhash;
 using System.Threading.Tasks;
 using System.Drawing;
@@ -13,6 +14,7 @@ using System.IO;
 using backend.Util;
 using MetadataExtractor.Formats.FileType;
 using System.Drawing.Imaging;
+using MetadataExtractor.Formats.FileSystem;
 
 namespace backend.Services
 {
@@ -39,7 +41,8 @@ namespace backend.Services
         {
             var files = System.IO.Directory.GetFiles(this.imageLocation)
                 .Select((filePath) => Path.GetFileName(filePath))
-                .Select((id) => Details(id).Simplify());
+                .Select((id) => Details(id).Simplify())
+                .OrderByDescending((e) => e.Timestamp);
 
             return files;
         }
@@ -68,15 +71,24 @@ namespace backend.Services
 
                 var metadata = ImageMetadataReader.ReadMetadata(fileName);
 
+                var fileMeta = metadata.OfType<FileMetadataDirectory>().FirstOrDefault();
+                if (fileMeta != null)
+                {
+                    fileMeta.TryGetDateTime(FileMetadataDirectory.TagFileModifiedDate, out var t);
+                    meta.Timestamp = t;
+                }
+
                 var exifSubIfd = metadata.OfType<ExifSubIfdDirectory>().FirstOrDefault();
                 if (exifSubIfd != null)
                 {
                     meta.Exif.FStop = exifSubIfd.GetDescription(ExifDirectoryBase.TagFNumber);
                     meta.Exif.Iso = exifSubIfd.GetDescription(ExifDirectoryBase.TagIsoEquivalent);
                     meta.Exif.ExposureTime = exifSubIfd.GetDescription(ExifDirectoryBase.TagExposureTime);
-                    meta.Exif.Taken = DateTimeUtil.ParseExif(exifSubIfd.GetDescription(ExifDirectoryBase.TagDateTimeOriginal));
                     meta.Exif.LensModel = exifSubIfd.GetDescription(ExifDirectoryBase.TagLensModel);
                     meta.Exif.LensMake = exifSubIfd.GetDescription(ExifDirectoryBase.TagLensMake);
+
+                    exifSubIfd.TryGetDateTime(ExifDirectoryBase.TagDateTimeOriginal, out var t);
+                    meta.Exif.Taken = t;
                 }
 
                 var exifIfd0 = metadata.OfType<ExifIfd0Directory>().FirstOrDefault();

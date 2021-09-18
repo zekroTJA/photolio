@@ -12,6 +12,10 @@ namespace backend.Models
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string Name { get; set; }
 
+        [JsonPropertyName("timestamp")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public DateTimeOffset Timestamp { get; set; }
+
         [JsonPropertyName("blurhash")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public BlurHash BlurHash { get; set; }
@@ -28,6 +32,7 @@ namespace backend.Models
         {
             Id = Id,
             Name = Name,
+            Timestamp = Timestamp,
             BlurHash = BlurHash,
             Dimenisons = Dimenisons,
         };
