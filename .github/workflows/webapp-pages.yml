@@ -5,6 +5,7 @@ on:
       - "master"
     paths:
       - "webapp"
+  workflow_dispatch:
 
 jobs:
   pages:
