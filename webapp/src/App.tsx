@@ -1,3 +1,4 @@
+import { Footer } from 'components/Footer';
 import { Header } from 'components/Header';
 import { PageContainer } from 'components/PageContainer';
 import { BrowserRouter as Router, Route } from 'react-router-dom';
@@ -8,7 +9,18 @@ import { createGlobalStyle } from 'styled-components';
 import { HomeRoute } from './routes/home/Home';
 
 const GlobalStyle = createGlobalStyle`
-  box-sizing: border-box;
+  * {
+    box-sizing: border-box;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+  }
+
+  a {
+    color: black;
+  }
 `;
 
 function App() {
@@ -21,6 +33,7 @@ function App() {
           <Route exact path="/about" component={AboutRoute} />
           <Route exact path="/contact" component={ContactRoute} />
           <Route exact path="/images/:id" component={ImageRoute} />
+          <Footer />
         </PageContainer>
       </Router>
       <GlobalStyle />
