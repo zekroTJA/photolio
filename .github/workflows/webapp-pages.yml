@@ -35,6 +35,8 @@ jobs:
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
+        env:
+          API_ROOT_URL: "https://api.gallery.zekro.de"
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: webapp/build
