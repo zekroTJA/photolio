@@ -5,6 +5,7 @@ on:
       - "master"
     paths:
       - "webapp/**"
+      - ".github/workflows/webapp-pages.yml"
   workflow_dispatch:
 
 jobs:
