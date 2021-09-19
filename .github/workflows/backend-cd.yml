@@ -6,7 +6,7 @@ on:
     tags:
       - "*"
     paths:
-      - "backend"
+      - "backend/**"
   workflow_dispatch:
 
 jobs:
