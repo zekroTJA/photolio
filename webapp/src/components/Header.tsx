@@ -1,15 +1,14 @@
 import { Link, useHistory, useLocation } from 'react-router-dom';
 import { Transition } from 'react-transition-group';
+import { WRAP_DISPLAY_BREAKPOINT } from 'static/static';
 import styled from 'styled-components';
-
-const WRAP_DISPLAY_SIZE = '500px';
 
 const Container = styled.div`
   padding: 0 5px 25px 5px;
   display: flex;
   justify-content: center;
 
-  @media screen and (max-width: ${WRAP_DISPLAY_SIZE}) {
+  @media screen and (max-width: ${WRAP_DISPLAY_BREAKPOINT}) {
     flex-flow: column;
 
     > * {
@@ -45,7 +44,7 @@ const Controls = styled.div`
   align-items: center;
   margin-left: 50px;
 
-  @media screen and (max-width: ${WRAP_DISPLAY_SIZE}) {
+  @media screen and (max-width: ${WRAP_DISPLAY_BREAKPOINT}) {
     margin: 20px auto 10px auto;
   }
 `;

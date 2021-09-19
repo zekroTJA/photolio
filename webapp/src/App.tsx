@@ -9,6 +9,11 @@ import { HomeRoute } from './routes/home/Home';
 
 const GlobalStyle = createGlobalStyle`
   box-sizing: border-box;
+
+  h1, h2, h3, h4, h5 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+  }
 `;
 
 function App() {
