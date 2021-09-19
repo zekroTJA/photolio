@@ -1,0 +1,37 @@
+name: Webapp Pages Deploy
+on:
+  push:
+    branches:
+      - "master"
+    paths:
+      - "webapp"
+
+jobs:
+  pages:
+    name: Deploy to Pages
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: "15.x"
+
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Static Content
+        run: npm run build
+
+      - name: Mirror index.html to 404.html
+        run: cp build/index.html build/404.html
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build
+          cname: gallery.zekro.de
