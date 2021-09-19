@@ -27,6 +27,8 @@ jobs:
 
       - name: Build Static Content
         working-directory: webapp
+        env:
+          REACT_APP_API_ROOT_URL: "https://api.gallery.zekro.de"
         run: npm run build
 
       - name: Mirror index.html to 404.html
@@ -35,8 +37,6 @@ jobs:
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
-        env:
-          REACT_APP_API_ROOT_URL: "https://api.gallery.zekro.de"
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: webapp/build
