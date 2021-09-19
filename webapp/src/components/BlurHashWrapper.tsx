@@ -62,6 +62,7 @@ export const BlurHashWrapper: React.FC<Props> = ({
         width={width}
         height={height}
         onLoad={() => setLoaded(true)}
+        alt=""
       />
       <Transition in={!loaded} timeout={0}>
         {(state) => (
