@@ -6,11 +6,7 @@ interface Props {
 }
 
 export const ALink: React.FC<Props> = ({ children, href, self }) => (
-  <a
-    href={href}
-    target={self ? '_self' : '_blank'}
-    rel={self ? '' : 'noreferrer'}
-  >
+  <a href={href} target={self ? '_self' : '_blank'} rel="noreferrer">
     {children}
   </a>
 );
