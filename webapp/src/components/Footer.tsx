@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
 import React from 'react';
 import styled from 'styled-components';
+import { ALink } from './ALink';
 
 const Container = styled.div`
   position: absolute;
@@ -35,17 +36,11 @@ export const Footer: React.FC = () => {
   return (
     <Container>
       <Links>
-        <a href="https://www.zekro.de/imprint" target="_blank">
-          Imprint
-        </a>
+        <ALink href="https://www.zekro.de/imprint">Imprint</ALink>
         <Separator />
-        <a href="https://www.zekro.de" target="_blank">
-          Homepage
-        </a>
+        <ALink href="https://www.zekro.de">Homepage</ALink>
         <Separator />
-        <a href="https://github.com/zekrotja/photolio" target="_blank">
-          GitHub
-        </a>
+        <ALink href="https://github.com/zekrotja/photolio">GitHub</ALink>
       </Links>
       <Small>© {currentYear} Ringo Hoffmann</Small>
     </Container>
