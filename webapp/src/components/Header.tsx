@@ -55,7 +55,6 @@ const LinkWrapper = styled(Link)<{ state: string }>`
   font-size: 18px;
   text-transform: lowercase;
   text-decoration: none;
-  color: black;
 
   margin-right: 20px;
   &:last-child {
@@ -71,7 +70,7 @@ const LinkWrapper = styled(Link)<{ state: string }>`
       p.state === 'entering' || p.state === 'entered' ? 100 : 0}%;
     margin-left: ${(p) => (p.state === 'exiting' ? 100 : 0)}%;
     height: 5px;
-    background-color: black;
+    background-color: currentColor;
     transition: all 0.2s ease;
   }
 `;

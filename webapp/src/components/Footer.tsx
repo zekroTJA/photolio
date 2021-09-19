@@ -26,7 +26,7 @@ const Links = styled.div`
 const Separator = styled.div`
   height: 1.2em;
   width: 1px;
-  background-color: black;
+  background-color: currentColor;
   margin: 0 10px;
 `;
 
