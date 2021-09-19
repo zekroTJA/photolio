@@ -1,7 +1,7 @@
-import { ImageModel } from '../models/ImageModel';
+import { ImageModel } from 'models/ImageModel';
 
 const ROOT_URL =
-  process.env.API_ROOT_URL ??
+  process.env.REACT_APP_API_ROOT_URL ??
   (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000');
 
 export default class ImageService {
