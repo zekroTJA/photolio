@@ -28,7 +28,7 @@ jobs:
       - name: Build Static Content
         working-directory: webapp
         env:
-          REACT_APP_API_ROOT_URL: "https://api.gallery.zekro.de"
+          REACT_APP_API_ROOT_URL: "https://gallery-api.zekro.de/"
         run: npm run build
 
       - name: Mirror index.html to 404.html
