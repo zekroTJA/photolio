@@ -9,7 +9,7 @@ FROM build AS publish
 RUN dotnet publish backend.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS final
-# RUN apt-get update && apt-get install -y libgdiplus
+RUN apt-get update && apt-get install -y libgdiplus
 WORKDIR /app
 COPY --from=publish /app/publish .
 EXPOSE 80 443
