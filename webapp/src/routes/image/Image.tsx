@@ -53,40 +53,44 @@ export const ImageRoute: React.FC = () => {
 
   return (
     <Container>
-      {image && [
-        <Image
-          image={image!}
-          imageURL={ImageService.getImageSource(image.id)}
-          width="100%"
-        ></Image>,
-        <Details>
-          {(image.exif && [
-            <p>
-              {join(' ', image.exif.bodymake, image.exif.bodymodel)}
-              &nbsp;with&nbsp;
-              {join(' ', image.exif.lensmake, image.exif.lensmodel)}
-            </p>,
-            <p>
-              {join(
-                ' — ',
-                prefix('ISO ', image.exif.iso),
-                image.exif.fstop,
-                image.exif.exposuretime
-              )}
-            </p>,
-          ]) || (
-            <Small italic light>
-              No exif data existent.
-            </Small>
-          )}
-          <Small>
-            {format(
-              new Date(image.exif?.taken ?? image.timestamp),
-              'eeee, do LLLL yyyy — HH:MM:SS O'
+      {image && (
+        <div>
+          <Image
+            image={image!}
+            imageURL={ImageService.getImageSource(image.id)}
+            width="100%"
+          ></Image>
+          <Details>
+            {(image.exif && (
+              <div>
+                <p>
+                  {join(' ', image.exif.bodymake, image.exif.bodymodel)}
+                  &nbsp;with&nbsp;
+                  {join(' ', image.exif.lensmake, image.exif.lensmodel)}
+                </p>
+                <p>
+                  {join(
+                    ' — ',
+                    prefix('ISO ', image.exif.iso),
+                    image.exif.fstop,
+                    image.exif.exposuretime
+                  )}
+                </p>
+              </div>
+            )) || (
+              <Small italic light>
+                No exif data existent.
+              </Small>
             )}
-          </Small>
-        </Details>,
-      ]}
+            <Small>
+              {format(
+                new Date(image.exif?.taken ?? image.timestamp),
+                'eeee, do LLLL yyyy — HH:MM:SS O'
+              )}
+            </Small>
+          </Details>
+        </div>
+      )}
     </Container>
   );
 };
