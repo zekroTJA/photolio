@@ -15,6 +15,7 @@ using backend.Util;
 using MetadataExtractor.Formats.FileType;
 using System.Drawing.Imaging;
 using MetadataExtractor.Formats.FileSystem;
+using Microsoft.Extensions.Logging;
 
 namespace backend.Services
 {
@@ -24,22 +25,26 @@ namespace backend.Services
         private readonly string thumbnailLocation;
 
         private readonly ConcurrentDictionary<string, ImageModel> metaCache = new();
+        private readonly ILogger<LocalImageService> logger;
 
-        public LocalImageService(IConfiguration config)
+        public LocalImageService(IConfiguration config, ILogger<LocalImageService> _logger)
         {
             imageLocation = config.MustGetValue<string>("Storage:Locations:Content");
             thumbnailLocation = config.GetValue("Storage:Locations:Thumbanils", Path.Join(imageLocation, ".thumbnails"));
+            logger = _logger;
         }
 
         public void EnsureStorageBuckets()
         {
-            System.IO.Directory.CreateDirectory(this.imageLocation);
-            System.IO.Directory.CreateDirectory(this.thumbnailLocation);
+            logger.LogInformation($"Ensure Content Directory \"{imageLocation}\"");
+            System.IO.Directory.CreateDirectory(imageLocation);
+            logger.LogInformation($"Ensure Thumbnail Directory \"{thumbnailLocation}\"");
+            System.IO.Directory.CreateDirectory(thumbnailLocation);
         }
 
         public IEnumerable<ImageModel> List()
         {
-            var files = System.IO.Directory.GetFiles(this.imageLocation)
+            var files = System.IO.Directory.GetFiles(imageLocation)
                 .Select((filePath) => Path.GetFileName(filePath))
                 .Select((id) => Details(id).Simplify())
                 .OrderByDescending((e) => e.Timestamp);
@@ -146,9 +151,9 @@ namespace backend.Services
         }
 
         private string ImagePath(string id) =>
-            Path.Join(this.imageLocation, id);
+            Path.Join(imageLocation, id);
 
         private string ThumbnailPath(string id, int width, int height) =>
-            Path.Join(this.thumbnailLocation, $"{id}_{width}x{height}.jpg");
+            Path.Join(thumbnailLocation, $"{id}_{width}x{height}.jpg");
     }
 }
