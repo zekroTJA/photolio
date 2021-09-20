@@ -1,5 +1,5 @@
 import { ImageModel } from 'models/ImageModel';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { Blurhash } from 'react-blurhash';
 import styled from 'styled-components';
 import { Transition } from 'react-transition-group';
@@ -21,10 +21,12 @@ interface Props extends ImageProps, OptDimensions, Events {
   image: ImageModel;
 }
 
-const BlurhashContainer = styled(Blurhash)<{
+interface ContainerProps {
   state: string;
   clickable: boolean;
-}>`
+}
+
+const BlurhashContainer = styled(Blurhash)<ContainerProps>`
   position: absolute !important;
   top: 0;
   left: 0;
@@ -35,9 +37,25 @@ const BlurhashContainer = styled(Blurhash)<{
 
 const Container = styled.div`
   position: relative;
+
+  &:hover #hover-container {
+    opacity: 1;
+    pointer-events: all;
+  }
+`;
+
+const HoverContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 `;
 
 export const BlurHashWrapper: React.FC<Props> = ({
+  children,
   image,
   imageURL,
   height,
@@ -77,6 +95,9 @@ export const BlurHashWrapper: React.FC<Props> = ({
           />
         )}
       </Transition>
+      {children && (
+        <HoverContainer id="hover-container">{children}</HoverContainer>
+      )}
     </Container>
   );
 };
