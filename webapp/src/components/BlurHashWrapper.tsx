@@ -1,5 +1,5 @@
 import { ImageModel } from 'models/ImageModel';
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { Blurhash } from 'react-blurhash';
 import styled from 'styled-components';
 import { Transition } from 'react-transition-group';
