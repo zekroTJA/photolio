@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-import { ImageModel } from 'models/ImageModel';
 import React, { useContext } from 'react';
 import styled from 'styled-components';
 import { ImageContext } from './Image';

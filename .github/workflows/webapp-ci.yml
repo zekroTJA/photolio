@@ -1,0 +1,30 @@
+name: Webapp CI
+on:
+  push:
+    branches:
+      - "*"
+    paths:
+      - "webapp/**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Test
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: "15.x"
+
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        working-directory: webapp
+        run: npm ci
+
+      - name: Build Static Content
+        working-directory: webapp
+        run: npm run build
