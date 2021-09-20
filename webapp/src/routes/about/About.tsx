@@ -128,7 +128,7 @@ export const AboutRoute: React.FC = () => {
           <ALink href="https://open.spotify.com/user/zekrotja">
             <IconSpotify />
           </ALink>
-          <ALink href="https://tiktok.com/zekrotja">
+          <ALink href="https://tiktok.com/@zekrotja">
             <IconTiktok />
           </ALink>
         </Icons>
