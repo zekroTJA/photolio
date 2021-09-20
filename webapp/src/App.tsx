@@ -1,3 +1,4 @@
+import { Button } from 'components/Button';
 import { Footer } from 'components/Footer';
 import { Header } from 'components/Header';
 import { PageContainer } from 'components/PageContainer';
@@ -9,6 +10,7 @@ import { ContactRoute } from 'routes/contact/Contact';
 import { ImageRoute } from 'routes/image/Image';
 import { LocalStorageService } from 'services/LocalStorageService';
 import { createGlobalStyle, DefaultTheme } from 'styled-components';
+import { Theming } from 'util/Theming';
 import { HomeRoute } from './routes/home/Home';
 
 const GlobalStyle = createGlobalStyle`
@@ -17,11 +19,11 @@ const GlobalStyle = createGlobalStyle`
   }
 
   body {
-    background-color: ${(p) => (p.theme.dark ? '#0f0f0f' : 'white')};
-    color: ${(p) => (p.theme.dark ? 'white' : 'black')};
+    background-color: ${(p) => Theming.backgroundColor(p.theme.dark)};
+    color: ${(p) => Theming.textColor(p.theme.dark)};
 
     a {
-      color: ${(p) => (p.theme.dark ? 'white' : 'black')};
+      color: ${(p) => Theming.textColor(p.theme.dark)};
     }
   }
 
