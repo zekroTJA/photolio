@@ -10,7 +10,7 @@ import { ImageRoute } from 'routes/image/Image';
 import { LocalStorageService } from 'services/LocalStorageService';
 import { createGlobalStyle, DefaultTheme } from 'styled-components';
 import { Theming } from 'util/Theming';
-import { HomeRoute } from './routes/home/Home';
+import { HomeRoute } from 'routes/home/Home';
 
 const GlobalStyle = createGlobalStyle`
   * {

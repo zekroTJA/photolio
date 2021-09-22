@@ -4,15 +4,18 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { WRAP_DISPLAY_BREAKPOINT } from 'static/static';
 import styled from 'styled-components';
 
-import { ReactComponent as IconDeviantart } from 'assets/deviantart.svg';
-import { ReactComponent as IconGithub } from 'assets/github.svg';
-import { ReactComponent as IconInstagram } from 'assets/instagram.svg';
-import { ReactComponent as IconMail } from 'assets/mail.svg';
-import { ReactComponent as IconSpotify } from 'assets/spotify.svg';
-import { ReactComponent as IconTiktok } from 'assets/tiktok.svg';
-import { ReactComponent as IconTwitter } from 'assets/twitter.svg';
-import { ReactComponent as IconUnsplash } from 'assets/unsplash.svg';
-import { ReactComponent as IconYoutube } from 'assets/youtube.svg';
+import { IconsList } from 'components/IconsList';
+import {
+  LinkDeviantart,
+  LinkGithub,
+  LinkInstagram,
+  LinkMail,
+  LinkSpotify,
+  LinkTiktok,
+  LinkTwitter,
+  LinkUnsplash,
+  LinkYoutube,
+} from 'components/ContactLinks';
 
 const Image = styled.div<{ url: string }>`
   background-image: url(${(p) => p.url});
@@ -43,26 +46,6 @@ const TextContainer = styled.div`
     max-width: 500px;
     float: left;
     margin: 5px 40px 20px 0;
-  }
-`;
-
-const Icons = styled.div`
-  > * {
-    opacity: 0.7;
-    &:hover {
-      opacity: 1;
-    }
-
-    transition: all 0.2s ease;
-
-    margin-right: 10px;
-    &::last-child {
-      margin-right: 0;
-    }
-
-    > svg {
-      width: 30px;
-    }
   }
 `;
 
@@ -103,35 +86,17 @@ export const AboutRoute: React.FC = () => {
           architecture and wildlife photography in the future.
         </p>
         <h2>Get to know me ✉️</h2>
-        <Icons>
-          <ALink href="mailto:contact@zekro.de">
-            <IconMail />
-          </ALink>
-          <ALink href="https://instagram.com/zekrotja">
-            <IconInstagram />
-          </ALink>
-          <ALink href="https://unsplash.com/@zekro">
-            <IconUnsplash />
-          </ALink>
-          <ALink href="https://deviantart.com/zekrotja">
-            <IconDeviantart />
-          </ALink>
-          <ALink href="https://twitter.com/zekrotja">
-            <IconTwitter />
-          </ALink>
-          <ALink href="https://youtube.com/zekrommaster110">
-            <IconYoutube />
-          </ALink>
-          <ALink href="https://github.com/zekrotja">
-            <IconGithub />
-          </ALink>
-          <ALink href="https://open.spotify.com/user/zekrotja">
-            <IconSpotify />
-          </ALink>
-          <ALink href="https://tiktok.com/@zekrotja">
-            <IconTiktok />
-          </ALink>
-        </Icons>
+        <IconsList>
+          <LinkMail />
+          <LinkInstagram />
+          <LinkUnsplash />
+          <LinkDeviantart />
+          <LinkTwitter />
+          <LinkYoutube />
+          <LinkGithub />
+          <LinkSpotify />
+          <LinkTiktok />
+        </IconsList>
       </TextContainer>
     </PaddingContainer>
   );
