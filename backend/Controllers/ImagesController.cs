@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using backend.Models;
 using backend.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -18,8 +19,8 @@ namespace backend.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<string>> List() =>
-            Ok(imageService.List());
+        public async Task<ActionResult<IEnumerable<ImageModel>>> List() =>
+            Ok(await imageService.ListAsync());
 
         [HttpGet("{id}")]
         public ActionResult<FileStream> Data([FromRoute] string id)
@@ -31,8 +32,8 @@ namespace backend.Controllers
         }
 
         [HttpGet("{id}/meta")]
-        public ActionResult<ImageModel> Details([FromRoute] string id) =>
-            Ok(imageService.Details(id));
+        public async Task<ActionResult<ImageModel>> Details([FromRoute] string id) =>
+            Ok(await imageService.DetailsAsync(id));
 
         [HttpGet("{id}/thumbnail")]
         public ActionResult<FileStream> Thubnail(

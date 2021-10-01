@@ -31,6 +31,13 @@ namespace backend
                         .AllowAnyHeader()));
 
             services.AddSingleton<IImageService, LocalImageService>();
+
+            var redisAddress = Configuration.GetValue<string>("Cache:Redis:Address");
+            if (!string.IsNullOrWhiteSpace(redisAddress))
+                services.AddSingleton<ICacheService>(
+                    (_) => new RedisCacheService(redisAddress, Configuration.GetValue("Cache:Redis:Database", -1)));
+            else
+                services.AddSingleton<ICacheService, MemCacheService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -50,7 +57,7 @@ namespace backend
             // image metadata.
             var imgService = app.ApplicationServices.GetService<IImageService>();
             imgService.EnsureStorageBuckets();
-            imgService.List();
+            imgService.ListAsync().Wait();
         }
     }
 }

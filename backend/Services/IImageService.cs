@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using backend.Models;
 
 namespace backend.Services
@@ -17,14 +18,14 @@ namespace backend.Services
         /// models available.
         /// </summary>
         /// <returns></returns>
-        IEnumerable<ImageModel> List();
+        Task<IEnumerable<ImageModel>> ListAsync();
 
         /// <summary>
         /// Returns details of a given image by ID.
         /// </summary>
         /// <param name="id">The image ID.</param>
         /// <returns></returns>
-        ImageModel Details(string id);
+        Task<ImageModel> DetailsAsync(string id);
 
         /// <summary>
         /// Returns an open file stream and mime type 

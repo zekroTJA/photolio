@@ -23,14 +23,14 @@ namespace backend.Services
     {
         private readonly string imageLocation;
         private readonly string thumbnailLocation;
-
-        private readonly ConcurrentDictionary<string, ImageModel> metaCache = new();
+        private readonly ICacheService cache;
         private readonly ILogger<LocalImageService> logger;
 
-        public LocalImageService(IConfiguration config, ILogger<LocalImageService> _logger)
+        public LocalImageService(IConfiguration config, ICacheService _cache, ILogger<LocalImageService> _logger)
         {
             imageLocation = config.MustGetValue<string>("Storage:Locations:Content");
             thumbnailLocation = config.GetValue("Storage:Locations:Thumbanils", Path.Join(imageLocation, ".thumbnails"));
+            cache = _cache;
             logger = _logger;
         }
 
@@ -42,19 +42,21 @@ namespace backend.Services
             System.IO.Directory.CreateDirectory(thumbnailLocation);
         }
 
-        public IEnumerable<ImageModel> List()
+        public async Task<IEnumerable<ImageModel>> ListAsync()
         {
-            var files = System.IO.Directory.GetFiles(imageLocation)
-                .Select((filePath) => Path.GetFileName(filePath))
-                .Select((id) => Details(id).Simplify())
-                .OrderByDescending((e) => e.Timestamp);
+            var files = await Task.WhenAll(
+                System.IO.Directory.GetFiles(imageLocation)
+                    .Select((filePath) => Path.GetFileName(filePath))
+                    .Select((id) => DetailsAsync(id)));
 
-            return files;
+            return files
+                .Select(f => f.Simplify())
+                .OrderByDescending((e) => e.Timestamp);
         }
 
-        public ImageModel Details(string id)
+        public Task<ImageModel> DetailsAsync(string id)
         {
-            return metaCache.GetOrAdd(id, (_) =>
+            return cache.GetOrAddAsync(id, (_) =>
             {
                 var fileName = ImagePath(id);
                 var image = Image.FromFile(fileName);
@@ -106,7 +108,7 @@ namespace backend.Services
                     meta.Exif.BodyMake = exifIfd0.GetDescription(ExifDirectoryBase.TagMake);
                 }
 
-                return meta;
+                return ValueTask.FromResult(meta).AsTask();
             });
         }
 
