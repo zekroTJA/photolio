@@ -25,6 +25,10 @@ jobs:
         working-directory: webapp
         run: npm ci
 
+      - name: Run Tests
+        working-directory: webapp
+        run: npm run test
+
       - name: Build Static Content
         working-directory: webapp
         run: npm run build
