@@ -1,8 +1,8 @@
-use super::spec::Storage;
+use super::spec::{ReadSeek, Storage};
 use std::{
     error::Error,
     fs,
-    io::{Read, Write},
+    io::{copy, Read},
     path::{Path, PathBuf},
 };
 
@@ -25,18 +25,23 @@ impl Storage for Local {
         fs::create_dir_all(self.bucket_path(bucket)).map_err(Box::from)
     }
 
-    fn store(&self, bucket: &str, name: &str, content: &[u8]) -> Result<(), Box<dyn Error>> {
+    fn store<R>(&self, bucket: &str, name: &str, content: &mut R) -> Result<(), Box<dyn Error>>
+    where
+        R: Read,
+    {
         self.create_bucket_if_not_exists(bucket)?;
         let mut file = fs::File::create(self.bucket_path(bucket).join(name))?;
-        file.write(content)?;
+        copy(content, &mut file)?;
         Ok(())
     }
 
-    fn read(&self, bucket: &str, name: &str) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>> {
-        let mut file = fs::File::open(self.bucket_path(bucket).join(name))?;
-        let mut buf = Vec::<u8>::new();
-        file.read_to_end(&mut buf)?;
-        Ok(buf)
+    fn read(
+        &self,
+        bucket: &str,
+        name: &str,
+    ) -> Result<Box<dyn ReadSeek>, Box<dyn Error + Send + Sync>> {
+        let file = fs::File::open(self.bucket_path(bucket).join(name))?;
+        Ok(Box::new(file))
     }
 
     fn list(&self, bucket: &str) -> Result<Vec<String>, Box<dyn Error>> {

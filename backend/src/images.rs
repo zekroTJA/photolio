@@ -8,7 +8,7 @@ use exif::{DateTime, In, Tag, Value};
 use log::{debug, error, info};
 use std::{
     error::Error,
-    io::{Cursor, Seek},
+    io::{BufReader, Seek},
     path::Path,
     sync::{mpsc::channel, Arc},
 };
@@ -63,7 +63,7 @@ where
     Ok(rx.iter().take(n_items).collect())
 }
 
-pub fn image_details<S, C>(
+fn image_details<S, C>(
     storage: Arc<Box<S>>,
     cache: &mut Arc<Box<C>>,
     id: &str,
@@ -75,12 +75,12 @@ where
     info!("Collecting image details for {id} ...");
 
     let data = storage.read(CONTENT_BUCKET, id)?;
-    let mut data_cursor = Cursor::new(data);
+    let mut buf_data = BufReader::new(data);
 
     let image_format =
         image::ImageFormat::from_extension(Path::new(id).extension().unwrap_or_default());
 
-    let mut image_reader = image::io::Reader::new(&mut data_cursor);
+    let mut image_reader = image::io::Reader::new(&mut buf_data);
     if let Some(format) = image_format {
         debug!("{{{id}}} Got format from ext");
         image_reader.set_format(format);
@@ -91,11 +91,11 @@ where
 
     debug!("{{{id}}} Decoding image ...");
     let image = image_reader.decode()?;
-    data_cursor.seek(std::io::SeekFrom::Start(0))?;
+    buf_data.seek(std::io::SeekFrom::Start(0))?;
 
     debug!("{{{id}}} Reading exif metadata ...");
     let exif_reader = exif::Reader::new();
-    let exif_meta = exif_reader.read_from_container(&mut data_cursor)?;
+    let exif_meta = exif_reader.read_from_container(&mut buf_data)?;
 
     let datetime = match exif_meta.get_field(Tag::DateTime, In::PRIMARY) {
         Some(field) => match field.value {
