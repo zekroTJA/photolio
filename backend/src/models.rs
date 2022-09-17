@@ -1,18 +1,19 @@
 use chrono::{DateTime, Utc};
+use serde::Serialize;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Dimensions {
     pub width: u32,
     pub height: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BlurHash {
     pub hash: String,
     pub components: Dimensions,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Exif {
     pub fstop: Option<String>,
     pub iso: Option<String>,
@@ -24,7 +25,7 @@ pub struct Exif {
     pub bodymake: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Image {
     pub id: String,
     pub name: String,

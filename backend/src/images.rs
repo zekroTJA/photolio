@@ -36,10 +36,7 @@ where
     }
 }
 
-pub fn list<S, C>(
-    storage: Arc<S>,
-    cache: &mut Arc<C>,
-) -> Result<Vec<Result<Image, Box<dyn Error + Send + Sync>>>, Box<dyn Error>>
+pub fn list<S, C>(storage: Arc<S>, cache: Arc<C>) -> Result<Vec<Image>, Box<dyn Error>>
 where
     S: Storage + Send + Sync + 'static,
     C: Cache<Image> + Send + Sync + 'static,
@@ -62,7 +59,11 @@ where
         });
     }
 
-    Ok(rx.iter().take(n_items).collect())
+    let res = match rx.iter().take(n_items).collect::<Result<Vec<_>, _>>() {
+        Ok(r) => r,
+        Err(e) => return Err(e),
+    };
+    Ok(res)
 }
 
 fn image_reader<'a, R>(
@@ -177,6 +178,13 @@ where
     cache.set(format!("imgmeta-{id}").as_str(), &image);
 
     Ok(image)
+}
+
+pub fn data<S>(storage: Arc<S>, id: &str) -> Result<Box<dyn ReadSeek>, Box<dyn Error + Send + Sync>>
+where
+    S: Storage,
+{
+    storage.read(CONTENT_BUCKET, id)
 }
 
 pub fn thumbnail<S>(

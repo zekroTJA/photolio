@@ -44,8 +44,9 @@ async fn main() -> std::io::Result<()> {
     //     }
     // }
 
-    images::thumbnail(s.clone(), "DSC03444_LR.jpg", 100, 0).expect("failed");
+    // images::thumbnail(s.clone(), "DSC03444_LR.jpg", 100, 0).expect("failed");
+    images::data(s.clone(), "");
 
     info!("Starting web server on localhost:8080 ...");
-    ws::run("localhost", 8080).await
+    ws::run("localhost", 8080, s, c).await
 }
