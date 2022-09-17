@@ -8,7 +8,7 @@ pub struct InMemory<T> {
     map: RwLock<HashMap<String, T>>,
 }
 
-impl<'a, T> InMemory<T> {
+impl<T> InMemory<T> {
     pub fn new() -> Self {
         InMemory {
             map: RwLock::new(HashMap::new()),
@@ -16,16 +16,13 @@ impl<'a, T> InMemory<T> {
     }
 }
 
-impl<'a, T> Cache<T> for InMemory<T>
+impl<T> Cache<T> for InMemory<T>
 where
     T: Clone,
 {
     fn get(&self, key: &str) -> Option<T> {
         match &self.map.read() {
-            Ok(m) => match m.get(key) {
-                Some(e) => Some(e.clone()),
-                None => None,
-            },
+            Ok(m) => m.get(key).cloned(),
             Err(_) => {
                 error!("map lock is poisoned");
                 None
@@ -33,7 +30,7 @@ where
         }
     }
 
-    fn set(&mut self, key: &str, val: &T) {
+    fn set(&self, key: &str, val: &T) {
         match &mut self.map.write() {
             Ok(m) => {
                 m.insert(key.to_string(), val.clone());

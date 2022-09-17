@@ -44,6 +44,10 @@ impl Storage for Local {
         Ok(Box::new(file))
     }
 
+    fn exists(&self, bucket: &str, name: &str) -> Result<bool, Box<dyn Error>> {
+        Ok(self.bucket_path(bucket).join(name).exists())
+    }
+
     fn list(&self, bucket: &str) -> Result<Vec<String>, Box<dyn Error>> {
         fs::read_dir(self.bucket_path(bucket))?
             .map(|res| {

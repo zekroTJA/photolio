@@ -1,24 +1,26 @@
 use crate::{
     cache::spec::Cache,
     models::{BlurHash, Dimensions, Exif, Image},
-    storage::spec::Storage,
+    storage::spec::{ReadSeek, Storage},
 };
 use chrono::{NaiveDate, Utc};
 use exif::{DateTime, In, Tag, Value};
+use image::ImageOutputFormat;
 use log::{debug, error, info};
 use std::{
     error::Error,
-    io::{BufReader, Seek},
+    io::{BufReader, Cursor, Read, Seek, SeekFrom},
     path::Path,
     sync::{mpsc::channel, Arc},
 };
 use threadpool::ThreadPool;
 
 const CONTENT_BUCKET: &str = "content";
+const THUMBNAILS_BUCKET: &str = "thumbnails";
 
 pub fn details<S, C>(
-    storage: Arc<Box<S>>,
-    cache: &mut Arc<Box<C>>,
+    storage: Arc<S>,
+    cache: Arc<C>,
     id: &str,
 ) -> Result<Image, Box<dyn Error + Send + Sync>>
 where
@@ -35,8 +37,8 @@ where
 }
 
 pub fn list<S, C>(
-    storage: Arc<Box<S>>,
-    cache: &mut Arc<Box<C>>,
+    storage: Arc<S>,
+    cache: &mut Arc<C>,
 ) -> Result<Vec<Result<Image, Box<dyn Error + Send + Sync>>>, Box<dyn Error>>
 where
     S: Storage + Send + Sync + 'static,
@@ -53,7 +55,7 @@ where
         let storage = storage.clone();
         let mut cache = cache.clone();
         pool.execute(move || {
-            let res = details(storage, &mut cache, id.as_str());
+            let res = details(storage, cache, id.as_str());
             if let Err(err) = tx.send(res) {
                 error!("Failed sending result to channel {id}: {err}");
             }
@@ -63,9 +65,31 @@ where
     Ok(rx.iter().take(n_items).collect())
 }
 
+fn image_reader<'a, R>(
+    buf_data: &'a mut BufReader<R>,
+    id: &str,
+) -> Result<image::io::Reader<&'a mut BufReader<R>>, Box<dyn Error + Send + Sync>>
+where
+    R: Read + Seek,
+{
+    let image_format =
+        image::ImageFormat::from_extension(Path::new(id).extension().unwrap_or_default());
+
+    let mut image_reader = image::io::Reader::new(buf_data);
+    if let Some(format) = image_format {
+        debug!("{{{id}}} Got format from ext");
+        image_reader.set_format(format);
+    } else {
+        debug!("{{{id}}} Guessing image format ...");
+        image_reader = image_reader.with_guessed_format()?;
+    }
+
+    Ok(image_reader)
+}
+
 fn image_details<S, C>(
-    storage: Arc<Box<S>>,
-    cache: &mut Arc<Box<C>>,
+    storage: Arc<S>,
+    cache: Arc<C>,
     id: &str,
 ) -> Result<Image, Box<dyn Error + Send + Sync>>
 where
@@ -77,17 +101,7 @@ where
     let data = storage.read(CONTENT_BUCKET, id)?;
     let mut buf_data = BufReader::new(data);
 
-    let image_format =
-        image::ImageFormat::from_extension(Path::new(id).extension().unwrap_or_default());
-
-    let mut image_reader = image::io::Reader::new(&mut buf_data);
-    if let Some(format) = image_format {
-        debug!("{{{id}}} Got format from ext");
-        image_reader.set_format(format);
-    } else {
-        debug!("{{{id}}} Guessing image format ...");
-        image_reader = image_reader.with_guessed_format()?;
-    }
+    let image_reader = image_reader(&mut buf_data, id)?;
 
     debug!("{{{id}}} Decoding image ...");
     let image = image_reader.decode()?;
@@ -159,12 +173,62 @@ where
         },
     };
 
-    if let Some(cache) = Arc::get_mut(cache) {
-        debug!("{{{id}}} Storing result to cache ...");
-        cache.set(format!("imgmeta-{id}").as_str(), &image);
-    }
+    debug!("{{{id}}} Storing result to cache ...");
+    cache.set(format!("imgmeta-{id}").as_str(), &image);
 
     Ok(image)
+}
+
+pub fn thumbnail<S>(
+    storage: Arc<S>,
+    id: &str,
+    width: u32,
+    height: u32,
+) -> Result<Box<dyn ReadSeek>, Box<dyn Error>>
+where
+    S: Storage,
+{
+    if width == 0 && height == 0 {
+        return Err("width and height can not be both 0".into());
+    }
+
+    let thumbnail_id = format!("{id}_{width}x{height}");
+
+    if storage.exists(THUMBNAILS_BUCKET, thumbnail_id.as_str())? {
+        debug!("Returning thumbnail from storage for {id} ...");
+        return match storage.read(THUMBNAILS_BUCKET, thumbnail_id.as_str()) {
+            Ok(r) => Ok(r),
+            Err(e) => Err(e),
+        };
+    }
+
+    info!("Generating thumbnail for {id} ...");
+
+    let reader = match storage.read(CONTENT_BUCKET, id) {
+        Ok(r) => r,
+        Err(e) => return Err(e),
+    };
+
+    let mut buf_data = BufReader::new(reader);
+    let image_reader = match image_reader(&mut buf_data, id) {
+        Ok(r) => r,
+        Err(e) => return Err(e),
+    };
+
+    let mut buf = Cursor::new(Vec::<u8>::new());
+
+    let width = if width == 0 { u32::MAX } else { width };
+    let height = if height == 0 { u32::MAX } else { height };
+
+    image_reader
+        .decode()?
+        .thumbnail(width, height)
+        .write_to(&mut buf, ImageOutputFormat::Jpeg(80))?;
+
+    buf.seek(SeekFrom::Start(0))?;
+    storage.store(THUMBNAILS_BUCKET, thumbnail_id.as_str(), &mut buf)?;
+
+    Ok(Box::new(buf))
 }
 
 fn get_exif_field(exif_meta: &exif::Exif, tag: Tag) -> Option<String> {
