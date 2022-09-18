@@ -1,4 +1,4 @@
-skip_precache = true
+skipprecache = true
 
 [storage]
 location = "../data"
@@ -6,4 +6,4 @@ location = "../data"
 [server]
 port = 8080
 address = "localhost"
-allowed_origin = "http://localhost:8080"
+allowedorigin = "http://localhost:8080"
