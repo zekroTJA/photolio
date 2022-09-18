@@ -6,7 +6,7 @@ use crate::{
     tenary,
 };
 use actix_web::http::StatusCode;
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{NaiveDate, Utc};
 use exif::{In, Tag, Value};
 use image::{GenericImageView, ImageOutputFormat};
 use log::{debug, error, info, warn};
