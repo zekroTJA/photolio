@@ -76,17 +76,28 @@ where
         .body(v))
 }
 
-pub async fn run<S, C>(addr: &str, port: u16, storage: Arc<S>, cache: Arc<C>) -> std::io::Result<()>
+pub async fn run<S, C>(
+    addr: &str,
+    port: u16,
+    origin: Option<String>,
+    storage: Arc<S>,
+    cache: Arc<C>,
+) -> std::io::Result<()>
 where
     S: Storage + Sync + Send + 'static,
     C: Cache<Image> + Sync + Send + 'static,
 {
     HttpServer::new(move || {
-        let cors = Cors::default()
+        let mut cors = Cors::default()
             .allow_any_header()
             .allow_any_method()
-            .send_wildcard()
             .max_age(3600);
+
+        if let Some(org) = origin.clone() {
+            cors = cors.allowed_origin(org.as_str());
+        } else {
+            cors = cors.send_wildcard();
+        }
 
         App::new()
             .route("/images", web::get().to(get_meta_list::<S, C>))

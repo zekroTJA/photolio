@@ -11,8 +11,10 @@ pub struct Local {
 }
 
 impl Local {
-    pub fn new(root_dir: String) -> Self {
-        Local { root_dir }
+    pub fn new(root_dir: &str) -> Self {
+        Local {
+            root_dir: root_dir.into(),
+        }
     }
 
     fn bucket_path(&self, bucket: &str) -> PathBuf {

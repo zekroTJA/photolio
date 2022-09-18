@@ -1,0 +1,9 @@
+skip_precache = true
+
+[storage]
+location = "../data"
+
+[server]
+port = 8080
+address = "localhost"
+allowed_origin = "http://localhost:8080"
