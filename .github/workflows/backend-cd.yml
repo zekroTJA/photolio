@@ -38,6 +38,4 @@ jobs:
         with:
           context: backend
           push: true
-          no-cache: false
-          tags: |
-            ghcr.io/zekrotja/photolio-backend:${{ env.TAG }}
+          tags: ghcr.io/zekrotja/photolio-backend:${{ env.TAG }}
