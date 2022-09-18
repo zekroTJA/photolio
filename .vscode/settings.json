@@ -1,0 +1,5 @@
+{
+  "terminal.integrated.env.linux": {
+    "RUST_LOG": "debug"
+  }
+}

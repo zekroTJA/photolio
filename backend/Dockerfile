@@ -1,18 +1,13 @@
-FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
-WORKDIR /src
-COPY backend.csproj .
-RUN dotnet restore backend.csproj
-COPY . .
-RUN dotnet build backend.csproj -c Release -o /app/build
+FROM rust:alpine AS build
+WORKDIR /build
+COPY src src
+COPY Cargo.lock .
+COPY Cargo.toml .
+RUN cargo build --release
 
-FROM build AS publish
-RUN dotnet publish backend.csproj -c Release -o /app/publish
-
-FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS final
-RUN apt-get update && apt-get install -y libgdiplus
-WORKDIR /app
-COPY --from=publish /app/publish .
-EXPOSE 80 443
-VOLUME /app/storage
-ENV STORAGE__LOCATIONS__CONTENT="/app/storage"
-ENTRYPOINT ["dotnet", "backend.dll"]
+FROM alpine AS release
+COPY --from=build /build/release/backend /bin/backend
+ENV PH_STORAGE_LOCATION="/var/data"
+VOLUME [ "/var/data/thumbnails" ]
+EXPOSE 80
+ENTRYPOINT [ "/bin/backend" ]

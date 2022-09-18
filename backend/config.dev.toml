@@ -1,0 +1,9 @@
+skipprecache = true
+
+[storage]
+location = "../data"
+
+[server]
+port = 8080
+address = "localhost"
+allowedorigin = "http://localhost:8080"
