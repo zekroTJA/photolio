@@ -21,9 +21,9 @@ async fn main() -> std::io::Result<()> {
     let c = Arc::new(InMemory::<Image>::new());
     let s = Arc::new(Local::new(String::from("../data")));
 
-    info!("Pre-caching image metadata for all images ...");
-    images::list(s.clone(), c.clone()).expect("list initialization failed");
+    // info!("Pre-caching image metadata for all images ...");
+    // images::list(s.clone(), c.clone()).expect("list initialization failed");
 
     info!("Starting web server on localhost:8080 ...");
-    ws::run("localhost", 8080, s, c).await
+    ws::server::run("localhost", 8080, s, c).await
 }

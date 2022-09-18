@@ -5,6 +5,7 @@ use crate::{
     models::{DimensionsOpt, Image},
     storage::spec::Storage,
 };
+use actix_cors::Cors;
 use actix_web::{
     middleware::Logger,
     web::{self, Data},
@@ -14,6 +15,8 @@ use std::{
     io::{self, copy},
     sync::Arc,
 };
+
+use super::middleware::AddCache;
 
 async fn get_meta_list<S, C>(storage: Data<S>, cache: Data<C>) -> Result<HttpResponse, Error>
 where
@@ -48,9 +51,7 @@ where
     let mut res = images::data(storage.into_inner(), id.as_str()).map_err(|e| map_err(e))?;
     let mut v = Vec::<u8>::new();
     copy(&mut res, &mut v)?;
-    Ok(HttpResponse::Ok()
-        .append_header(("Cache-Control", "public, max-age=604800, immutable"))
-        .body(v))
+    Ok(HttpResponse::Ok().body(v))
 }
 
 async fn get_image_thumbnail<S>(
@@ -81,15 +82,27 @@ where
     C: Cache<Image> + Sync + Send + 'static,
 {
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_header()
+            .allow_any_method()
+            .send_wildcard()
+            .max_age(3600);
+
         App::new()
             .route("/images", web::get().to(get_meta_list::<S, C>))
-            .route("/images/{id}", web::get().to(get_image::<S>))
+            .route(
+                "/images/{id}",
+                web::get().to(get_image::<S>).wrap(AddCache::default()),
+            )
             .route("/images/{id}/meta", web::get().to(get_meta::<S, C>))
             .route(
                 "/images/{id}/thumbnail",
-                web::get().to(get_image_thumbnail::<S>),
+                web::get()
+                    .to(get_image_thumbnail::<S>)
+                    .wrap(AddCache::default()),
             )
             .wrap(Logger::default())
+            .wrap(cors)
             .app_data(Data::from(cache.clone()))
             .app_data(Data::from(storage.clone()))
     })
