@@ -62,10 +62,13 @@ where
         });
     }
 
-    let res = match rx.iter().take(n_items).collect::<Result<Vec<_>, _>>() {
+    let mut res = match rx.iter().take(n_items).collect::<Result<Vec<_>, _>>() {
         Ok(r) => r,
         Err(e) => return Err(e),
     };
+
+    res.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+
     Ok(res)
 }
 
