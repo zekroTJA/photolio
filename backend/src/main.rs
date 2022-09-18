@@ -22,7 +22,7 @@ async fn main() -> std::io::Result<()> {
     let cfg = Config::builder()
         .add_source(File::new("config.toml", FileFormat::Toml).required(false))
         .add_source(File::new("config.dev.toml", FileFormat::Toml).required(false))
-        .add_source(Environment::with_prefix("PH"))
+        .add_source(Environment::with_prefix("PH").separator("_"))
         .build()
         .expect("Failed reading config")
         .try_deserialize::<conf::Config>()
@@ -39,7 +39,7 @@ async fn main() -> std::io::Result<()> {
     let c = Arc::new(InMemory::<Image>::new());
     let s = Arc::new(Local::new(storage_loc.as_str()));
 
-    if !cfg.skip_precache.unwrap_or(false) {
+    if !cfg.skipprecache.unwrap_or(false) {
         info!("Pre-caching image metadata for all images ...");
         images::list(s.clone(), c.clone()).expect("list initialization failed");
     } else {
@@ -51,5 +51,5 @@ async fn main() -> std::io::Result<()> {
     let ws_port = ws_conf.port.unwrap_or(80);
 
     info!("Starting web server on {ws_addr}:{ws_port} ...");
-    ws::server::run(ws_addr.as_str(), ws_port, ws_conf.allowed_origin, s, c).await
+    ws::server::run(ws_addr.as_str(), ws_port, ws_conf.allowedorigin, s, c).await
 }

@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    pub skip_precache: Option<bool>,
+    pub skipprecache: Option<bool>,
     pub server: Option<ServerConfig>,
     pub storage: Option<StorageConfig>,
 }
@@ -11,7 +11,7 @@ pub struct Config {
 pub struct ServerConfig {
     pub address: Option<String>,
     pub port: Option<u16>,
-    pub allowed_origin: Option<String>,
+    pub allowedorigin: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
