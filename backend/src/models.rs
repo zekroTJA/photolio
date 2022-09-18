@@ -13,13 +13,13 @@ pub struct DimensionsOpt {
     pub height: Option<u32>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BlurHash {
     pub hash: String,
     pub components: Dimensions,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Exif {
     pub fstop: Option<String>,
     pub iso: Option<String>,
@@ -31,7 +31,7 @@ pub struct Exif {
     pub bodymake: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Image {
     pub id: String,
     pub name: String,

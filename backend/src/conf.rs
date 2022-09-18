@@ -5,6 +5,7 @@ pub struct Config {
     pub skipprecache: Option<bool>,
     pub server: Option<ServerConfig>,
     pub storage: Option<StorageConfig>,
+    pub cache: Option<CacheConfig>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -17,4 +18,9 @@ pub struct ServerConfig {
 #[derive(Debug, Default, Deserialize)]
 pub struct StorageConfig {
     pub location: Option<String>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct CacheConfig {
+    pub cachelocation: Option<String>,
 }

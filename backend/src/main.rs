@@ -36,7 +36,14 @@ async fn main() -> std::io::Result<()> {
         .unwrap_or_default()
         .location
         .unwrap_or_else(|| "data".into());
-    let c = Arc::new(InMemory::<Image>::new());
+    let cache_loc = cfg
+        .cache
+        .unwrap_or_default()
+        .cachelocation
+        .unwrap_or_else(|| ".cache".into());
+
+    let c =
+        Arc::new(InMemory::<Image>::load(cache_loc.as_str()).expect("Failed initializing cache"));
     let s = Arc::new(Local::new(storage_loc.as_str()));
 
     if !cfg.skipprecache.unwrap_or(false) {
