@@ -10,7 +10,7 @@ mod macros;
 
 use cache::inmemory::InMemory;
 use config::{Config, Environment, File, FileFormat};
-use log::{debug, error, info, warn};
+use log::{debug, info, warn};
 use models::Image;
 use std::sync::Arc;
 use storage::local::Local;

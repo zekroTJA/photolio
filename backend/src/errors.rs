@@ -27,8 +27,4 @@ impl StatusError {
     pub fn status(&self) -> StatusCode {
         self.status
     }
-
-    pub fn inner(&self) -> &(dyn Error) {
-        self.inner.as_ref()
-    }
 }
