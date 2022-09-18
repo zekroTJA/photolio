@@ -1,11 +1,14 @@
 use crate::{
     cache::spec::Cache,
+    errors::StatusError,
     models::{BlurHash, Dimensions, Exif, Image},
     storage::spec::{ReadSeek, Storage},
+    tenary,
 };
+use actix_web::http::StatusCode;
 use chrono::{NaiveDate, Utc};
 use exif::{DateTime, In, Tag, Value};
-use image::ImageOutputFormat;
+use image::{GenericImageView, ImageOutputFormat};
 use log::{debug, error, info};
 use std::{
     error::Error,
@@ -50,7 +53,7 @@ where
     for id in item_ids {
         let tx = tx.clone();
         let storage = storage.clone();
-        let mut cache = cache.clone();
+        let cache = cache.clone();
         pool.execute(move || {
             let res = details(storage, cache, id.as_str());
             if let Err(err) = tx.send(res) {
@@ -197,7 +200,10 @@ where
     S: Storage,
 {
     if width == 0 && height == 0 {
-        return Err("width and height can not be both 0".into());
+        return Err(Box::new(StatusError::wrap(
+            "with and height can not be both 0".into(),
+            StatusCode::BAD_REQUEST,
+        )));
     }
 
     let thumbnail_id = format!("{id}_{width}x{height}");
@@ -228,14 +234,20 @@ where
     let width = if width == 0 { u32::MAX } else { width };
     let height = if height == 0 { u32::MAX } else { height };
 
-    image_reader
-        .decode()?
+    let image = image_reader.decode()?;
+
+    let (original_width, original_height) = image.dimensions();
+    let width = tenary!(width > original_width => original_width; width);
+    let height = tenary!(height > original_height => original_height; height);
+
+    image
         .thumbnail(width, height)
         .write_to(&mut buf, ImageOutputFormat::Jpeg(80))?;
 
     buf.seek(SeekFrom::Start(0))?;
     storage.store(THUMBNAILS_BUCKET, thumbnail_id.as_str(), &mut buf)?;
 
+    buf.seek(SeekFrom::Start(0))?;
     Ok(Box::new(buf))
 }
 

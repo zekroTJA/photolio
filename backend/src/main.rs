@@ -1,14 +1,17 @@
 mod cache;
+mod errors;
 mod images;
 mod models;
 mod storage;
 mod ws;
 
-use std::sync::Arc;
+#[macro_use]
+mod macros;
 
 use cache::inmemory::InMemory;
 use log::{debug, error, info};
 use models::Image;
+use std::sync::Arc;
 use storage::local::Local;
 
 #[actix_web::main]
@@ -18,34 +21,8 @@ async fn main() -> std::io::Result<()> {
     let c = Arc::new(InMemory::<Image>::new());
     let s = Arc::new(Local::new(String::from("../data")));
 
-    // debug!(
-    //     "test {:#?}",
-    //     images::details(
-    //         s.clone(),
-    //         &mut c.clone(),
-    //         String::from("DSC03444.jpg").as_str()
-    //     )
-    // );
-    // debug!(
-    //     "test {:#?}",
-    //     images::details(
-    //         s.clone(),
-    //         &mut c.clone(),
-    //         String::from("DSC03444.jpg").as_str()
-    //     )
-    // );
-
-    // images::list(s.clone(), &mut c.clone()).unwrap();
-    // let res = images::list(s.clone(), &mut c.clone()).unwrap();
-    // for r in res {
-    //     match r {
-    //         Ok(i) => debug!("Image received: {:#?}", i),
-    //         Err(e) => error!("Error decoding image: {e}"),
-    //     }
-    // }
-
-    // images::thumbnail(s.clone(), "DSC03444_LR.jpg", 100, 0).expect("failed");
-    images::data(s.clone(), "");
+    info!("Pre-caching image metadata for all images ...");
+    images::list(s.clone(), c.clone()).expect("list initialization failed");
 
     info!("Starting web server on localhost:8080 ...");
     ws::run("localhost", 8080, s, c).await

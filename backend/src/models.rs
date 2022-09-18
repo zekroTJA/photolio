@@ -1,10 +1,16 @@
 use chrono::{DateTime, Utc};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Dimensions {
     pub width: u32,
     pub height: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DimensionsOpt {
+    pub width: Option<u32>,
+    pub height: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize)]
