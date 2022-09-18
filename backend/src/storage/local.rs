@@ -1,7 +1,7 @@
 use super::spec::{ReadSeek, Storage};
 use std::{
     error::Error,
-    fs,
+    fs::{self, Metadata},
     io::{copy, Read},
     path::{Path, PathBuf},
 };
@@ -44,6 +44,12 @@ impl Storage for Local {
     ) -> Result<Box<dyn ReadSeek>, Box<dyn Error + Send + Sync>> {
         let file = fs::File::open(self.bucket_path(bucket).join(name))?;
         Ok(Box::new(file))
+    }
+
+    fn meta(&self, bucket: &str, name: &str) -> Result<Metadata, Box<dyn Error + Send + Sync>> {
+        let file = fs::File::open(self.bucket_path(bucket).join(name))?;
+        let meta = file.metadata()?;
+        Ok(meta)
     }
 
     fn exists(&self, bucket: &str, name: &str) -> Result<bool, Box<dyn Error>> {

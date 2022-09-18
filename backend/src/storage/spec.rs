@@ -1,6 +1,6 @@
 use std::{
     error::Error,
-    fs::File,
+    fs::{File, Metadata},
     io::{Cursor, Read, Seek},
 };
 
@@ -20,6 +20,8 @@ pub trait Storage {
         bucket: &str,
         name: &str,
     ) -> Result<Box<dyn ReadSeek>, Box<dyn Error + Send + Sync>>;
+
+    fn meta(&self, bucket: &str, name: &str) -> Result<Metadata, Box<dyn Error + Send + Sync>>;
 
     fn exists(&self, bucket: &str, name: &str) -> Result<bool, Box<dyn Error>>;
 

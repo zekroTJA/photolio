@@ -6,8 +6,8 @@ use crate::{
     tenary,
 };
 use actix_web::http::StatusCode;
-use chrono::{NaiveDate, Utc};
-use exif::{DateTime, In, Tag, Value};
+use chrono::{DateTime, NaiveDate, Utc};
+use exif::{In, Tag, Value};
 use image::{GenericImageView, ImageOutputFormat};
 use log::{debug, error, info, warn};
 use std::{
@@ -100,7 +100,7 @@ fn extract_exif(
     let datetime = match exif_meta.get_field(Tag::DateTime, In::PRIMARY) {
         Some(field) => match field.value {
             Value::Ascii(ref vec) if !vec.is_empty() => {
-                if let Ok(datetime) = DateTime::from_ascii(&vec[0]) {
+                if let Ok(datetime) = exif::DateTime::from_ascii(&vec[0]) {
                     Some(datetime)
                 } else {
                     None
@@ -153,7 +153,6 @@ where
     let image = image_reader.decode()?;
     buf_data.seek(std::io::SeekFrom::Start(0))?;
 
-    // exif::Error::NotFound("");
     debug!("{{{id}}} Reading exif metadata ...");
     let ex = match extract_exif(buf_data) {
         Ok(r) => Ok(Some(r)),
@@ -184,10 +183,12 @@ where
         image.to_rgba8().to_vec().as_slice(),
     );
 
+    let meta = storage.meta(CONTENT_BUCKET, id)?;
+
     let image = Image {
         id: id.to_string(),
         name: id.to_string(),
-        timestamp: chrono::Utc::now(),
+        timestamp: meta.modified()?.into(),
         blurhash: BlurHash {
             hash: b_hash,
             components: bh_dimensions,

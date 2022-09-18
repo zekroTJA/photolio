@@ -4,6 +4,6 @@ skipprecache = true
 location = "../data"
 
 [server]
-port = 8080
+port = 5000
 address = "localhost"
-allowedorigin = "http://localhost:8080"
+allowedorigin = "http://localhost:3000"
