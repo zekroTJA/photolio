@@ -38,5 +38,5 @@ pub struct Image {
     pub timestamp: DateTime<Utc>,
     pub blurhash: BlurHash,
     pub dimensions: Dimensions,
-    pub exif: Exif,
+    pub exif: Option<Exif>,
 }
