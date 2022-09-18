@@ -1,4 +1,4 @@
-FROM rust:alpine AS build
+FROM rust:slim AS build
 WORKDIR /build
 COPY src src
 COPY Cargo.lock .
