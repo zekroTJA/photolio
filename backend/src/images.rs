@@ -30,7 +30,13 @@ where
     S: Storage,
     C: Cache<Image>,
 {
-    match cache.get(format!("imgmeta-{id}").as_str()) {
+    let v = cache
+        .get(format!("imgmeta-{id}").as_str())
+        .unwrap_or_else(|err| {
+            error!("failed getting image meta from cache: {err}");
+            None
+        });
+    match v {
         Some(i) => {
             debug!("Returned image meta from cache for {id}");
             Ok(i)
@@ -204,7 +210,9 @@ where
     };
 
     debug!("{{{id}}} Storing result to cache ...");
-    cache.set(format!("imgmeta-{id}").as_str(), &image);
+    if let Err(err) = cache.set(format!("imgmeta-{id}").as_str(), &image) {
+        error!("failed storing result to cache: {err}");
+    }
 
     Ok(image)
 }

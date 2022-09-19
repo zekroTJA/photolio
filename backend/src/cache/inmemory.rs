@@ -45,13 +45,16 @@ where
         })
     }
 
-    fn try_store_to_disk(&self) -> Result<(), Box<dyn Error>> {
+    fn store_to_disk(&self) -> Result<(), Box<dyn Error + Send + Sync>> {
         let file_name = match self.disk_file.clone() {
             Some(f) => f,
             _ => return Ok(()),
         };
 
-        let file = OpenOptions::new().write(true).open(file_name)?;
+        let file = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(file_name)?;
 
         match &self.map.read() {
             Ok(m) => {
@@ -73,29 +76,32 @@ impl<T> Cache<T> for InMemory<T>
 where
     T: Clone + DeserializeOwned + Serialize,
 {
-    fn get(&self, key: &str) -> Option<T> {
+    fn get(&self, key: &str) -> Result<Option<T>, Box<dyn Error + Send + Sync>> {
         match &self.map.read() {
-            Ok(m) => m.get(key).cloned(),
-            Err(_) => {
-                error!("map lock is poisoned");
-                None
-            }
+            Ok(m) => Ok(m.get(key).cloned()),
+            Err(_) => Err("map lock is poisoned".into()),
         }
     }
 
-    fn set(&self, key: &str, val: &T) {
+    fn set(&self, key: &str, val: &T) -> Result<(), Box<dyn Error + Send + Sync>> {
         match &mut self.map.write() {
             Ok(m) => {
                 m.insert(key.to_string(), val.clone());
             }
-            Err(_) => {
-                error!("map lock is poisoned");
-                return;
-            }
+            Err(_) => return Err("map lock is poisoned".into()),
         }
 
-        if let Err(err) = self.try_store_to_disk() {
-            error!("failed storing cache state to disk: {err}");
+        self.store_to_disk()
+    }
+
+    fn flush(&self) -> Result<(), Box<dyn Error + Send + Sync>> {
+        match &mut self.map.write() {
+            Ok(m) => {
+                m.clear();
+            }
+            Err(_) => return Err("map lock is poisoned".into()),
         }
+
+        self.store_to_disk()
     }
 }

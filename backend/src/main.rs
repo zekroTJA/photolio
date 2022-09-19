@@ -8,9 +8,11 @@ mod ws;
 #[macro_use]
 mod macros;
 
+use crate::cache::spec::Cache;
+use argparse::{ArgumentParser, Store, StoreTrue};
 use cache::inmemory::InMemory;
 use config::{Config, Environment, File, FileFormat};
-use log::{debug, info, warn};
+use log::{debug, error, info, warn};
 use models::Image;
 use std::sync::Arc;
 use storage::local::Local;
@@ -19,8 +21,23 @@ use storage::local::Local;
 async fn main() -> std::io::Result<()> {
     env_logger::init();
 
+    let mut cfg_file = "config.toml".to_string();
+    let mut flush_cache = false;
+
+    {
+        let mut ap = ArgumentParser::new();
+        ap.refer(&mut cfg_file)
+            .add_option(&["-c", "--config"], Store, "The config file location.");
+        ap.refer(&mut flush_cache).add_option(
+            &["--flush-cache"],
+            StoreTrue,
+            "Flush the image meta cache and exit afterwards.",
+        );
+        ap.parse_args_or_exit();
+    }
+
     let cfg = Config::builder()
-        .add_source(File::new("config.toml", FileFormat::Toml).required(false))
+        .add_source(File::new(cfg_file.as_str(), FileFormat::Toml).required(false))
         .add_source(File::new("config.dev.toml", FileFormat::Toml).required(false))
         .add_source(Environment::with_prefix("PH").separator("_"))
         .build()
@@ -45,6 +62,15 @@ async fn main() -> std::io::Result<()> {
     let c =
         Arc::new(InMemory::<Image>::load(cache_loc.as_str()).expect("Failed initializing cache"));
     let s = Arc::new(Local::new(storage_loc.as_str()));
+
+    if flush_cache {
+        info!("Flushing image meta cache ...");
+        match c.flush() {
+            Ok(_) => info!("Image meta cache flushed."),
+            Err(err) => error!("Failed flushing image meta cache: {err}"),
+        };
+        return Ok(());
+    }
 
     if !cfg.skipprecache.unwrap_or(false) {
         info!("Pre-caching image metadata for all images ...");
