@@ -128,10 +128,10 @@ fn extract_exif(
         fstop: get_exif_field(&exif_meta, Tag::FNumber),
         iso: get_exif_field(&exif_meta, Tag::ISOSpeed),
         exposuretime: get_exif_field(&exif_meta, Tag::ExposureTime),
-        lensmodel: get_exif_field(&exif_meta, Tag::LensModel),
-        lensmake: get_exif_field(&exif_meta, Tag::LensMake),
-        bodymodel: get_exif_field(&exif_meta, Tag::Model),
-        bodymake: get_exif_field(&exif_meta, Tag::Make),
+        lensmodel: get_exif_field(&exif_meta, Tag::LensModel).map(|s| s.trim_matches('"').into()),
+        lensmake: get_exif_field(&exif_meta, Tag::LensMake).map(|s| s.trim_matches('"').into()),
+        bodymodel: get_exif_field(&exif_meta, Tag::Model).map(|s| s.trim_matches('"').into()),
+        bodymake: get_exif_field(&exif_meta, Tag::Make).map(|s| s.trim_matches('"').into()),
         taken: datetime,
     })
 }
