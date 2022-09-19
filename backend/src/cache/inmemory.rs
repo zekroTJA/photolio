@@ -1,5 +1,5 @@
 use super::spec::Cache;
-use log::{debug, error};
+use log::debug;
 use serde::{de::DeserializeOwned, Serialize};
 use std::{
     collections::HashMap,
@@ -18,6 +18,7 @@ impl<T> InMemory<T>
 where
     T: Clone + DeserializeOwned + Serialize,
 {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         InMemory {
             map: HashMap::new().into(),
