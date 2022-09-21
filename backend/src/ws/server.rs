@@ -1,7 +1,9 @@
+use super::middleware::AddCache;
 use crate::{
     cache::CacheDriver,
-    errors::StatusError,
+    errors::{StatusError, StringError},
     images,
+    interlock::Interlock,
     models::{DimensionsOpt, Image},
     storage::StorageDriver,
 };
@@ -16,16 +18,28 @@ use std::{
     sync::Arc,
 };
 
-use super::middleware::AddCache;
+type InterlockResult = Arc<Result<Vec<Image>, StringError>>;
 
 async fn get_meta_list(
     storage: Data<StorageDriver>,
     cache: Data<CacheDriver<Image>>,
+    interlock: Data<Interlock<InterlockResult>>,
 ) -> Result<HttpResponse, Error> {
-    let res = images::list(storage.into_inner(), cache.into_inner())
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+    let res = interlock.get(|| {
+        let r = images::list(storage.clone().into_inner(), cache.clone().into_inner());
+        Arc::new(r)
+    });
 
-    Ok(HttpResponse::Ok().json(res))
+    let v = match &*res {
+        Ok(v) => Ok(v),
+        Err(e) => Err(actix_web::error::ErrorInternalServerError(e.clone())),
+    }?;
+
+    // let res = *res.clone();
+    // let res = res.map_err(actix_web::error::ErrorInternalServerError)?;
+
+    Ok(HttpResponse::Ok().json(v))
+    // Ok(HttpResponse::Ok().finish())
 }
 
 async fn get_meta(
@@ -75,6 +89,8 @@ pub async fn run(
     storage: Arc<StorageDriver>,
     cache: Arc<CacheDriver<Image>>,
 ) -> std::io::Result<()> {
+    let interlock = Arc::new(Interlock::<InterlockResult>::new());
+
     HttpServer::new(move || {
         let mut cors = Cors::default()
             .allow_any_header()
@@ -102,6 +118,7 @@ pub async fn run(
             .wrap(cors)
             .app_data(Data::from(cache.clone()))
             .app_data(Data::from(storage.clone()))
+            .app_data(Data::from(interlock.clone()))
     })
     .bind((addr, port))?
     .run()

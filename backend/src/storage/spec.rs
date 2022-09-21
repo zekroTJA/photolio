@@ -24,5 +24,5 @@ pub trait Storage {
 
     fn exists(&self, bucket: &str, name: &str) -> Result<bool, Box<dyn Error>>;
 
-    fn list(&self, bucket: &str) -> Result<Vec<String>, Box<dyn Error>>;
+    fn list(&self, bucket: &str) -> Result<Vec<String>, Box<dyn Error + Send + Sync>>;
 }

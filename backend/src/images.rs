@@ -1,6 +1,6 @@
 use crate::{
     cache::CacheDriver,
-    errors::StatusError,
+    errors::{StatusError, StringError},
     models::{BlurHash, Dimensions, Exif, Image},
     storage::{spec::ReadSeek, StorageDriver},
     tenary,
@@ -44,8 +44,8 @@ pub fn details(
 pub fn list(
     storage: Arc<StorageDriver>,
     cache: Arc<CacheDriver<Image>>,
-) -> Result<Vec<Image>, Box<dyn Error>> {
-    let item_ids = storage.list(CONTENT_BUCKET)?;
+) -> Result<Vec<Image>, StringError> {
+    let item_ids = storage.list(CONTENT_BUCKET).map_err(StringError)?;
 
     let pool = ThreadPool::new(num_cpus::get());
     let (tx, rx) = channel();
@@ -65,7 +65,7 @@ pub fn list(
 
     let mut res = match rx.iter().take(n_items).collect::<Result<Vec<_>, _>>() {
         Ok(r) => r,
-        Err(e) => return Err(e),
+        Err(e) => return Err(StringError(e)),
     };
 
     res.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
