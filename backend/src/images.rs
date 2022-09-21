@@ -1,8 +1,8 @@
 use crate::{
-    cache::spec::Cache,
+    cache::CacheDriver,
     errors::StatusError,
     models::{BlurHash, Dimensions, Exif, Image},
-    storage::spec::{ReadSeek, Storage},
+    storage::{spec::ReadSeek, StorageDriver},
     tenary,
 };
 use actix_web::http::StatusCode;
@@ -21,15 +21,11 @@ use threadpool::ThreadPool;
 const CONTENT_BUCKET: &str = "content";
 const THUMBNAILS_BUCKET: &str = "thumbnails";
 
-pub fn details<S, C>(
-    storage: Arc<S>,
-    cache: Arc<C>,
+pub fn details(
+    storage: &StorageDriver,
+    cache: &CacheDriver<Image>,
     id: &str,
-) -> Result<Image, Box<dyn Error + Send + Sync>>
-where
-    S: Storage,
-    C: Cache<Image>,
-{
+) -> Result<Image, Box<dyn Error + Send + Sync>> {
     let v = cache
         .get(format!("imgmeta-{id}").as_str())
         .unwrap_or_else(|err| {
@@ -45,11 +41,10 @@ where
     }
 }
 
-pub fn list<S, C>(storage: Arc<S>, cache: Arc<C>) -> Result<Vec<Image>, Box<dyn Error>>
-where
-    S: Storage + Send + Sync + 'static,
-    C: Cache<Image> + Send + Sync + 'static,
-{
+pub fn list(
+    storage: Arc<StorageDriver>,
+    cache: Arc<CacheDriver<Image>>,
+) -> Result<Vec<Image>, Box<dyn Error>> {
     let item_ids = storage.list(CONTENT_BUCKET)?;
 
     let pool = ThreadPool::new(num_cpus::get());
@@ -61,7 +56,7 @@ where
         let storage = storage.clone();
         let cache = cache.clone();
         pool.execute(move || {
-            let res = details(storage, cache, id.as_str());
+            let res = details(storage.as_ref(), cache.as_ref(), id.as_str());
             if let Err(err) = tx.send(res) {
                 error!("Failed sending result to channel {id}: {err}");
             }
@@ -142,15 +137,11 @@ fn extract_exif(
     })
 }
 
-fn image_details<S, C>(
-    storage: Arc<S>,
-    cache: Arc<C>,
+fn image_details(
+    storage: &StorageDriver,
+    cache: &CacheDriver<Image>,
     id: &str,
-) -> Result<Image, Box<dyn Error + Send + Sync>>
-where
-    S: Storage,
-    C: Cache<Image>,
-{
+) -> Result<Image, Box<dyn Error + Send + Sync>> {
     info!("Collecting image details for {id} ...");
 
     let data = storage.read(CONTENT_BUCKET, id)?;
@@ -217,22 +208,19 @@ where
     Ok(image)
 }
 
-pub fn data<S>(storage: Arc<S>, id: &str) -> Result<Box<dyn ReadSeek>, Box<dyn Error + Send + Sync>>
-where
-    S: Storage,
-{
+pub fn data(
+    storage: &StorageDriver,
+    id: &str,
+) -> Result<Box<dyn ReadSeek>, Box<dyn Error + Send + Sync>> {
     storage.read(CONTENT_BUCKET, id)
 }
 
-pub fn thumbnail<S>(
-    storage: Arc<S>,
+pub fn thumbnail(
+    storage: &StorageDriver,
     id: &str,
     width: u32,
     height: u32,
-) -> Result<Box<dyn ReadSeek>, Box<dyn Error>>
-where
-    S: Storage,
-{
+) -> Result<Box<dyn ReadSeek>, Box<dyn Error>> {
     if width == 0 && height == 0 {
         return Err(Box::new(StatusError::wrap(
             "with and height can not be both 0".into(),

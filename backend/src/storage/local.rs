@@ -27,10 +27,12 @@ impl Storage for Local {
         fs::create_dir_all(self.bucket_path(bucket)).map_err(Box::from)
     }
 
-    fn store<R>(&self, bucket: &str, name: &str, content: &mut R) -> Result<(), Box<dyn Error>>
-    where
-        R: Read,
-    {
+    fn store(
+        &self,
+        bucket: &str,
+        name: &str,
+        content: &mut dyn Read,
+    ) -> Result<(), Box<dyn Error>> {
         self.create_bucket_if_not_exists(bucket)?;
         let mut file = fs::File::create(self.bucket_path(bucket).join(name))?;
         copy(content, &mut file)?;

@@ -1,9 +1,9 @@
 use crate::{
-    cache::spec::Cache,
+    cache::CacheDriver,
     errors::StatusError,
     images,
     models::{DimensionsOpt, Image},
-    storage::spec::Storage,
+    storage::StorageDriver,
 };
 use actix_cors::Cors;
 use actix_web::{
@@ -18,56 +18,48 @@ use std::{
 
 use super::middleware::AddCache;
 
-async fn get_meta_list<S, C>(storage: Data<S>, cache: Data<C>) -> Result<HttpResponse, Error>
-where
-    S: Storage + Sync + Send + 'static,
-    C: Cache<Image> + Sync + Send + 'static,
-{
+async fn get_meta_list(
+    storage: Data<StorageDriver>,
+    cache: Data<CacheDriver<Image>>,
+) -> Result<HttpResponse, Error> {
     let res = images::list(storage.into_inner(), cache.into_inner())
         .map_err(actix_web::error::ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok().json(res))
 }
 
-async fn get_meta<S, C>(
-    storage: Data<S>,
-    cache: Data<C>,
+async fn get_meta(
+    storage: Data<StorageDriver>,
+    cache: Data<CacheDriver<Image>>,
     id: web::Path<String>,
-) -> Result<HttpResponse, Error>
-where
-    S: Storage + Sync + Send + 'static,
-    C: Cache<Image> + Sync + Send + 'static,
-{
-    let res = images::details(storage.into_inner(), cache.into_inner(), id.as_str())
-        .map_err(|e| map_err(e))?;
+) -> Result<HttpResponse, Error> {
+    let res =
+        images::details(storage.as_ref(), cache.as_ref(), id.as_str()).map_err(|e| map_err(e))?;
 
     Ok(HttpResponse::Ok().json(res))
 }
 
-async fn get_image<S>(storage: Data<S>, id: web::Path<String>) -> Result<HttpResponse, Error>
-where
-    S: Storage + Sync + Send + 'static,
-{
-    let mut res = images::data(storage.into_inner(), id.as_str()).map_err(|e| map_err(e))?;
+async fn get_image(
+    storage: Data<StorageDriver>,
+    id: web::Path<String>,
+) -> Result<HttpResponse, Error> {
+    let mut res = images::data(storage.as_ref(), id.as_str()).map_err(|e| map_err(e))?;
     let mut v = Vec::<u8>::new();
     copy(&mut res, &mut v)?;
     Ok(HttpResponse::Ok().body(v))
 }
 
-async fn get_image_thumbnail<S>(
-    storage: Data<S>,
+async fn get_image_thumbnail(
+    storage: Data<StorageDriver>,
     id: web::Path<String>,
     web::Query(dimensions): web::Query<DimensionsOpt>,
-) -> Result<HttpResponse, Error>
-where
-    S: Storage + Sync + Send + 'static,
-{
+) -> Result<HttpResponse, Error> {
     let (width, height) = (
         dimensions.width.unwrap_or(0),
         dimensions.height.unwrap_or(0),
     );
     let mut res =
-        images::thumbnail(storage.into_inner(), id.as_str(), width, height).map_err(map_err)?;
+        images::thumbnail(storage.as_ref(), id.as_str(), width, height).map_err(map_err)?;
 
     let mut v = Vec::<u8>::new();
     copy(&mut res, &mut v)?;
@@ -76,17 +68,13 @@ where
         .body(v))
 }
 
-pub async fn run<S, C>(
+pub async fn run(
     addr: &str,
     port: u16,
     origin: Option<String>,
-    storage: Arc<S>,
-    cache: Arc<C>,
-) -> std::io::Result<()>
-where
-    S: Storage + Sync + Send + 'static,
-    C: Cache<Image> + Sync + Send + 'static,
-{
+    storage: Arc<StorageDriver>,
+    cache: Arc<CacheDriver<Image>>,
+) -> std::io::Result<()> {
     HttpServer::new(move || {
         let mut cors = Cors::default()
             .allow_any_header()
@@ -100,17 +88,15 @@ where
         }
 
         App::new()
-            .route("/images", web::get().to(get_meta_list::<S, C>))
+            .route("/images", web::get().to(get_meta_list))
             .route(
                 "/images/{id}",
-                web::get().to(get_image::<S>).wrap(AddCache::default()),
+                web::get().to(get_image).wrap(AddCache::default()),
             )
-            .route("/images/{id}/meta", web::get().to(get_meta::<S, C>))
+            .route("/images/{id}/meta", web::get().to(get_meta))
             .route(
                 "/images/{id}/thumbnail",
-                web::get()
-                    .to(get_image_thumbnail::<S>)
-                    .wrap(AddCache::default()),
+                web::get().to(get_image_thumbnail).wrap(AddCache::default()),
             )
             .wrap(Logger::default())
             .wrap(cors)

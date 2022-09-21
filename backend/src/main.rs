@@ -8,7 +8,6 @@ mod ws;
 #[macro_use]
 mod macros;
 
-use crate::cache::spec::Cache;
 use argparse::{ArgumentParser, Store, StoreTrue};
 use cache::inmemory::InMemory;
 use config::{Config, Environment, File, FileFormat};
@@ -59,9 +58,12 @@ async fn main() -> std::io::Result<()> {
         .cachelocation
         .unwrap_or_else(|| ".cache".into());
 
-    let c =
-        Arc::new(InMemory::<Image>::load(cache_loc.as_str()).expect("Failed initializing cache"));
-    let s = Arc::new(Local::new(storage_loc.as_str()));
+    let c = Arc::new(cache::CacheDriver::InMemory(
+        InMemory::<Image>::load(cache_loc.as_str()).expect("Failed initializing cache"),
+    ));
+    let s = Arc::new(storage::StorageDriver::Local(Local::new(
+        storage_loc.as_str(),
+    )));
 
     if flush_cache {
         info!("Flushing image meta cache ...");

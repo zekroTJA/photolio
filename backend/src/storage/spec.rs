@@ -11,9 +11,8 @@ impl ReadSeek for Cursor<std::vec::Vec<u8>> {}
 pub trait Storage {
     fn create_bucket_if_not_exists(&self, bucket: &str) -> Result<(), Box<dyn Error>>;
 
-    fn store<R>(&self, bucket: &str, name: &str, content: &mut R) -> Result<(), Box<dyn Error>>
-    where
-        R: Read;
+    fn store(&self, bucket: &str, name: &str, content: &mut dyn Read)
+        -> Result<(), Box<dyn Error>>;
 
     fn read(
         &self,
