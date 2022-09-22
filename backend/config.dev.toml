@@ -7,3 +7,7 @@ location = "../data"
 port = 5000
 address = "localhost"
 allowedorigin = "http://localhost:3000"
+
+[cache]
+type = "redis"
+redisaddress = "redis://localhost/1"

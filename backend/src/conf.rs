@@ -22,5 +22,8 @@ pub struct StorageConfig {
 
 #[derive(Debug, Default, Deserialize)]
 pub struct CacheConfig {
+    #[serde(rename = "type")]
+    pub typ: Option<String>,
     pub cachelocation: Option<String>,
+    pub redisaddress: Option<String>,
 }

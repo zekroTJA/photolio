@@ -11,7 +11,6 @@ mod ws;
 mod macros;
 
 use argparse::{ArgumentParser, Store, StoreTrue};
-use cache::inmemory::InMemory;
 use config::{Config, Environment, File, FileFormat};
 use log::{debug, error, info, warn};
 use models::Image;
@@ -49,20 +48,16 @@ async fn main() -> std::io::Result<()> {
     info!("Config parsed");
     debug!("Config content: {:#?}", cfg);
 
+    let cache_cfg = cfg.cache.unwrap_or_default();
+    let c = Arc::new(
+        cache::CacheDriver::<Image>::new(&cache_cfg).expect("cache initialization failed"),
+    );
+
     let storage_loc = cfg
         .storage
         .unwrap_or_default()
         .location
         .unwrap_or_else(|| "data".into());
-    let cache_loc = cfg
-        .cache
-        .unwrap_or_default()
-        .cachelocation
-        .unwrap_or_else(|| ".cache".into());
-
-    let c = Arc::new(cache::CacheDriver::InMemory(
-        InMemory::<Image>::load(cache_loc.as_str()).expect("Failed initializing cache"),
-    ));
     let s = Arc::new(storage::StorageDriver::Local(Local::new(
         storage_loc.as_str(),
     )));
