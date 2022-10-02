@@ -10,6 +10,11 @@ on:
       - ".github/workflows/backend-cd.yml"
   workflow_dispatch:
 
+env:
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}-backend
+
 jobs:
   docker:
     name: Build Docker Image
@@ -22,20 +27,28 @@ jobs:
       - name: Log in to ghcr
         uses: docker/login-action@v1
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - if: startsWith(github.ref, 'refs/heads/master')
-        run: echo "TAG=latest" >> $GITHUB_ENV
-
-      - if: startsWith(github.ref, 'refs/tags')
-        run: |
-          echo "TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v3.6.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=long,enable=${{ github.ref_type != 'tag' }}
+            type=ref,event=branch
+            type=semver,pattern={{raw}},enable=${{ github.ref_type == 'tag' }}
+            type=raw,value=latest,enable=${{ github.event.ref =='refs/heads/master'}}
+          flavor: latest=false
 
       - name: Build & Push
         uses: docker/build-push-action@v2
         with:
           context: backend
           push: true
-          tags: ghcr.io/zekrotja/photolio-backend:${{ env.TAG }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
