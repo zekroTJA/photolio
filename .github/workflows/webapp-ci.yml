@@ -7,9 +7,14 @@ on:
       - "webapp/**"
   workflow_dispatch:
 
+env:
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   build:
-    name: Build Test
+    name: Build Webapp
     runs-on: ubuntu-latest
     steps:
 
@@ -29,6 +34,35 @@ jobs:
         working-directory: webapp
         run: npm run test
 
-      - name: Build Static Content
-        working-directory: webapp
-        run: npm run build
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v3.6.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=long,enable=${{ github.ref_type != 'tag' }}
+            type=ref,event=branch
+            type=semver,pattern={{raw}},enable=${{ github.ref_type == 'tag' }}
+            type=raw,value=latest,enable=${{ github.event.ref =='refs/heads/master'}}
+          flavor: latest=false
+
+      # Build and push Docker image with Buildx (don't push on PR)
+      # https://github.com/docker/build-push-action
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
