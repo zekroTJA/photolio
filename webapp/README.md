@@ -5,7 +5,7 @@ Webapp for displaying the photo gallery
 ## Configuration
 
 | Environment Variable  | Options | Default |
-| ------------- | ------------- |
+| ------------- | ------------- | ------------- |
 | REACT_APP_API_ROOT_URL | URL to the backend(`../backend`) without a trailing slash  | ORIGIN_URL/api when in production deployment |
 
 ## Template Information
