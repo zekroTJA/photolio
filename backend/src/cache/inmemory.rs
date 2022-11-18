@@ -1,5 +1,5 @@
 use super::spec::Cache;
-use log::debug;
+use log::{debug, info};
 use serde::{de::DeserializeOwned, Serialize};
 use std::{
     collections::HashMap,
@@ -27,6 +27,8 @@ where
     }
 
     pub fn load(file_name: &str) -> io::Result<Self> {
+        info!("Loading memory cache from diks");
+
         let file = OpenOptions::new()
             .read(true)
             .write(true)

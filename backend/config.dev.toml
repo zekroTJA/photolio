@@ -1,4 +1,4 @@
-skipprecache = true
+skipprecache = false
 
 [storage]
 location = "../data"
@@ -9,5 +9,6 @@ address = "localhost"
 allowedorigin = "http://localhost:3000"
 
 [cache]
-type = "redis"
-redisaddress = "redis://localhost/1"
+type = "memory"
+cachelocation = ".cache"
+# redisaddress = "redis://localhost/1"

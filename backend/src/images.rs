@@ -10,44 +10,42 @@ use chrono::{NaiveDate, Utc};
 use exif::{In, Tag, Value};
 use image::{GenericImageView, ImageOutputFormat};
 use log::{debug, error, info, warn};
+use once_cell::sync::OnceCell;
 use std::{
     error::Error,
     io::{BufReader, Cursor, Read, Seek, SeekFrom},
     path::Path,
-    sync::{mpsc::channel, Arc},
+    sync::{mpsc::channel, Arc, Mutex},
 };
 use threadpool::ThreadPool;
 
-const CONTENT_BUCKET: &str = "content";
-const THUMBNAILS_BUCKET: &str = "thumbnails";
+pub const CONTENT_BUCKET: &str = "content";
+pub const THUMBNAILS_BUCKET: &str = "thumbnails";
 
-pub fn details(
-    storage: &StorageDriver,
-    cache: &CacheDriver<Image>,
-    id: &str,
-) -> Result<Image, Box<dyn Error + Send + Sync>> {
-    let v = cache
-        .get(format!("imgmeta-{id}").as_str())
-        .unwrap_or_else(|err| {
-            error!("failed getting image meta from cache: {err}");
-            None
-        });
-    match v {
-        Some(i) => {
-            debug!("Returned image meta from cache for {id}");
-            Ok(i)
-        }
-        None => image_details(storage, cache, id),
-    }
+static POOL: OnceCell<Mutex<ThreadPool>> = OnceCell::new();
+
+pub fn get_pool() -> &'static Mutex<threadpool::ThreadPool> {
+    POOL.get_or_init(|| Mutex::new(ThreadPool::new(num_cpus::get())))
 }
 
-pub fn list(
+pub fn cached_details(
+    cache: &CacheDriver<Image>,
+    id: &str,
+) -> Result<Option<Image>, Box<dyn Error + Send + Sync>> {
+    let v = cache.get(format!("imgmeta-{id}").as_str())?;
+    Ok(v)
+}
+
+pub fn cache_all_images(
     storage: Arc<StorageDriver>,
     cache: Arc<CacheDriver<Image>>,
-) -> Result<Vec<Image>, StringError> {
+    block: bool,
+) -> Result<(), StringError> {
     let item_ids = storage.list(CONTENT_BUCKET).map_err(StringError)?;
 
-    let pool = ThreadPool::new(num_cpus::get());
+    let pool = get_pool()
+        .lock()
+        .map_err(|_| StringError("locking thread poool failed".into()))?;
     let (tx, rx) = channel();
 
     let n_items = item_ids.len();
@@ -56,21 +54,138 @@ pub fn list(
         let storage = storage.clone();
         let cache = cache.clone();
         pool.execute(move || {
-            let res = details(storage.as_ref(), cache.as_ref(), id.as_str());
-            if let Err(err) = tx.send(res) {
-                error!("Failed sending result to channel {id}: {err}");
+            let res = image_details(&storage, &cache, &id);
+            if block {
+                if let Err(err) = tx.send(res) {
+                    error!("Failed sending result to channel {id}: {err}");
+                }
+            } else if let Err(err) = res {
+                error!("Failed gathering image details for {id}: {err}");
             }
         });
     }
 
-    let mut res = match rx.iter().take(n_items).collect::<Result<Vec<_>, _>>() {
-        Ok(r) => r,
-        Err(e) => return Err(StringError(e)),
-    };
+    if block {
+        match rx.iter().take(n_items).collect::<Result<Vec<_>, _>>() {
+            Ok(r) => r,
+            Err(e) => return Err(StringError(e)),
+        };
+    }
+
+    Ok(())
+}
+
+pub fn cache_single_image(
+    storage: Arc<StorageDriver>,
+    cache: Arc<CacheDriver<Image>>,
+    id: String,
+) -> Result<(), Box<dyn Error>> {
+    let pool = get_pool().lock()?;
+
+    pool.execute(move || {
+        let res = image_details(&storage, &cache, &id);
+        if let Err(err) = res {
+            error!("Failed gathering image details for {id}: {err}");
+        }
+    });
+
+    Ok(())
+}
+
+pub fn list(
+    storage: Arc<StorageDriver>,
+    cache: Arc<CacheDriver<Image>>,
+) -> Result<Vec<Image>, StringError> {
+    let mut res: Vec<Image> = storage
+        .list(CONTENT_BUCKET)
+        .map_err(StringError)?
+        .iter()
+        .map(|id| cached_details(&cache, id))
+        .map(|r| {
+            if let Err(err) = &r {
+                error!("Failed getting image from cache: {}", err);
+            }
+            debug!("{:#?}", r);
+            r.ok()
+        })
+        .filter(|r| r.is_some())
+        .filter_map(|r| r.unwrap())
+        .collect();
 
     res.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
 
     Ok(res)
+}
+
+pub fn data(
+    storage: &StorageDriver,
+    id: &str,
+) -> Result<Box<dyn ReadSeek>, Box<dyn Error + Send + Sync>> {
+    storage.read(CONTENT_BUCKET, id)
+}
+
+pub fn thumbnail(
+    storage: &StorageDriver,
+    id: &str,
+    width: u32,
+    height: u32,
+) -> Result<Box<dyn ReadSeek>, Box<dyn Error>> {
+    if width == 0 && height == 0 {
+        return Err(Box::new(StatusError::wrap(
+            "with and height can not be both 0".into(),
+            StatusCode::BAD_REQUEST,
+        )));
+    }
+
+    let thumbnail_id = format!("{id}_{width}x{height}");
+
+    if storage.exists(THUMBNAILS_BUCKET, thumbnail_id.as_str())? {
+        debug!("Returning thumbnail from storage for {id} ...");
+        return match storage.read(THUMBNAILS_BUCKET, thumbnail_id.as_str()) {
+            Ok(r) => Ok(r),
+            Err(e) => Err(e),
+        };
+    }
+
+    info!("Generating thumbnail for {id} ...");
+
+    let reader = match storage.read(CONTENT_BUCKET, id) {
+        Ok(r) => r,
+        Err(e) => return Err(e),
+    };
+
+    let mut buf_data = BufReader::new(reader);
+    let image_reader = match image_reader(&mut buf_data, id) {
+        Ok(r) => r,
+        Err(e) => return Err(e),
+    };
+
+    let mut buf = Cursor::new(Vec::<u8>::new());
+
+    let width = if width == 0 { u32::MAX } else { width };
+    let height = if height == 0 { u32::MAX } else { height };
+
+    let image = image_reader.decode()?;
+
+    let (original_width, original_height) = image.dimensions();
+    let width = tenary!(width > original_width => original_width; width);
+    let height = tenary!(height > original_height => original_height; height);
+
+    image
+        .thumbnail(width, height)
+        .write_to(&mut buf, ImageOutputFormat::Jpeg(80))?;
+
+    buf.seek(SeekFrom::Start(0))?;
+    storage.store(THUMBNAILS_BUCKET, thumbnail_id.as_str(), &mut buf)?;
+
+    buf.seek(SeekFrom::Start(0))?;
+    Ok(Box::new(buf))
+}
+
+fn get_exif_field(exif_meta: &exif::Exif, tag: Tag) -> Option<String> {
+    exif_meta
+        .get_field(tag, In::PRIMARY)
+        .map(|f| format!("{}", f.display_value().with_unit(f)))
 }
 
 fn image_reader<'a, R>(
@@ -206,75 +321,4 @@ fn image_details(
     }
 
     Ok(image)
-}
-
-pub fn data(
-    storage: &StorageDriver,
-    id: &str,
-) -> Result<Box<dyn ReadSeek>, Box<dyn Error + Send + Sync>> {
-    storage.read(CONTENT_BUCKET, id)
-}
-
-pub fn thumbnail(
-    storage: &StorageDriver,
-    id: &str,
-    width: u32,
-    height: u32,
-) -> Result<Box<dyn ReadSeek>, Box<dyn Error>> {
-    if width == 0 && height == 0 {
-        return Err(Box::new(StatusError::wrap(
-            "with and height can not be both 0".into(),
-            StatusCode::BAD_REQUEST,
-        )));
-    }
-
-    let thumbnail_id = format!("{id}_{width}x{height}");
-
-    if storage.exists(THUMBNAILS_BUCKET, thumbnail_id.as_str())? {
-        debug!("Returning thumbnail from storage for {id} ...");
-        return match storage.read(THUMBNAILS_BUCKET, thumbnail_id.as_str()) {
-            Ok(r) => Ok(r),
-            Err(e) => Err(e),
-        };
-    }
-
-    info!("Generating thumbnail for {id} ...");
-
-    let reader = match storage.read(CONTENT_BUCKET, id) {
-        Ok(r) => r,
-        Err(e) => return Err(e),
-    };
-
-    let mut buf_data = BufReader::new(reader);
-    let image_reader = match image_reader(&mut buf_data, id) {
-        Ok(r) => r,
-        Err(e) => return Err(e),
-    };
-
-    let mut buf = Cursor::new(Vec::<u8>::new());
-
-    let width = if width == 0 { u32::MAX } else { width };
-    let height = if height == 0 { u32::MAX } else { height };
-
-    let image = image_reader.decode()?;
-
-    let (original_width, original_height) = image.dimensions();
-    let width = tenary!(width > original_width => original_width; width);
-    let height = tenary!(height > original_height => original_height; height);
-
-    image
-        .thumbnail(width, height)
-        .write_to(&mut buf, ImageOutputFormat::Jpeg(80))?;
-
-    buf.seek(SeekFrom::Start(0))?;
-    storage.store(THUMBNAILS_BUCKET, thumbnail_id.as_str(), &mut buf)?;
-
-    buf.seek(SeekFrom::Start(0))?;
-    Ok(Box::new(buf))
-}
-
-fn get_exif_field(exif_meta: &exif::Exif, tag: Tag) -> Option<String> {
-    exif_meta
-        .get_field(tag, In::PRIMARY)
-        .map(|f| format!("{}", f.display_value().with_unit(f)))
 }

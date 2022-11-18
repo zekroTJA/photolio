@@ -66,4 +66,8 @@ impl Storage for Local {
             })
             .collect()
     }
+
+    fn get_bucket_path(&self, bucket: &str) -> Option<PathBuf> {
+        Some(self.bucket_path(bucket))
+    }
 }

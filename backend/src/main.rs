@@ -5,11 +5,13 @@ mod images;
 mod interlock;
 mod models;
 mod storage;
+mod watcher;
 mod ws;
 
 #[macro_use]
 mod macros;
 
+use actix_web::rt::spawn;
 use argparse::{ArgumentParser, Store, StoreTrue};
 use config::{Config, Environment, File, FileFormat};
 use log::{debug, error, info, warn};
@@ -73,10 +75,18 @@ async fn main() -> std::io::Result<()> {
 
     if !cfg.skipprecache.unwrap_or(false) {
         info!("Pre-caching image metadata for all images ...");
-        images::list(s.clone(), c.clone()).expect("list initialization failed");
+        images::cache_all_images(s.clone(), c.clone(), false).expect("pre-cache failed");
     } else {
         warn!("Pre-caching skipped");
     }
+
+    let _s = s.clone();
+    let _c = c.clone();
+    spawn(async {
+        watcher::watch_files(_s, _c)
+            .await
+            .expect("failed initializing watcher");
+    });
 
     let ws_conf = cfg.server.unwrap_or_default();
     let ws_addr = ws_conf.address.unwrap_or_else(|| "0.0.0.0".into());

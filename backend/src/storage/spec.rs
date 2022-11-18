@@ -2,6 +2,7 @@ use std::{
     error::Error,
     fs::{File, Metadata},
     io::{Cursor, Read, Seek},
+    path::PathBuf,
 };
 
 pub trait ReadSeek: Read + Seek {}
@@ -25,4 +26,6 @@ pub trait Storage {
     fn exists(&self, bucket: &str, name: &str) -> Result<bool, Box<dyn Error>>;
 
     fn list(&self, bucket: &str) -> Result<Vec<String>, Box<dyn Error + Send + Sync>>;
+
+    fn get_bucket_path(&self, bucket: &str) -> Option<PathBuf>;
 }

@@ -43,12 +43,10 @@ async fn get_meta_list(
 }
 
 async fn get_meta(
-    storage: Data<StorageDriver>,
     cache: Data<CacheDriver<Image>>,
     id: web::Path<String>,
 ) -> Result<HttpResponse, Error> {
-    let res =
-        images::details(storage.as_ref(), cache.as_ref(), id.as_str()).map_err(|e| map_err(e))?;
+    let res = images::cached_details(&cache, id.as_str()).map_err(|e| map_err(e))?;
 
     Ok(HttpResponse::Ok().json(res))
 }
@@ -57,7 +55,7 @@ async fn get_image(
     storage: Data<StorageDriver>,
     id: web::Path<String>,
 ) -> Result<HttpResponse, Error> {
-    let mut res = images::data(storage.as_ref(), id.as_str()).map_err(|e| map_err(e))?;
+    let mut res = images::data(&storage, id.as_str()).map_err(|e| map_err(e))?;
     let mut v = Vec::<u8>::new();
     copy(&mut res, &mut v)?;
     Ok(HttpResponse::Ok().body(v))
@@ -72,8 +70,7 @@ async fn get_image_thumbnail(
         dimensions.width.unwrap_or(0),
         dimensions.height.unwrap_or(0),
     );
-    let mut res =
-        images::thumbnail(storage.as_ref(), id.as_str(), width, height).map_err(map_err)?;
+    let mut res = images::thumbnail(&storage, id.as_str(), width, height).map_err(map_err)?;
 
     let mut v = Vec::<u8>::new();
     copy(&mut res, &mut v)?;
