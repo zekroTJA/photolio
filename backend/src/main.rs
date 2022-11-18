@@ -13,14 +13,17 @@ mod macros;
 use actix_web::rt::spawn;
 use argparse::{ArgumentParser, Store, StoreTrue};
 use config::{Config, Environment, File, FileFormat};
+use env_logger::Env;
 use log::{debug, error, info, warn};
 use models::Image;
-use std::sync::Arc;
+use std::{io, sync::Arc};
 use storage::local::Local;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info"))
+        .try_init()
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
 
     let mut cfg_file = "config.toml".to_string();
     let mut flush_cache = false;
