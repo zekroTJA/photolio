@@ -1,9 +1,9 @@
 use super::spec::Cache;
+use anyhow::{bail, Result};
 use log::{debug, info};
 use serde::{de::DeserializeOwned, Serialize};
 use std::{
     collections::HashMap,
-    error::Error,
     fs::OpenOptions,
     io::{self, BufReader},
     sync::RwLock,
@@ -48,7 +48,7 @@ where
         })
     }
 
-    fn store_to_disk(&self) -> Result<(), Box<dyn Error + Send + Sync>> {
+    fn store_to_disk(&self) -> Result<()> {
         let file_name = match self.disk_file.clone() {
             Some(f) => f,
             _ => return Ok(()),
@@ -70,7 +70,7 @@ where
 
                 Ok(())
             }
-            Err(_) => Err("map lock is poisoned".into()),
+            Err(_) => bail!("map lock is poisoned"),
         }
     }
 }
@@ -79,30 +79,30 @@ impl<T> Cache<T> for InMemory<T>
 where
     T: Clone + DeserializeOwned + Serialize,
 {
-    fn get(&self, key: &str) -> Result<Option<T>, Box<dyn Error + Send + Sync>> {
+    fn get(&self, key: &str) -> Result<Option<T>> {
         match &self.map.read() {
             Ok(m) => Ok(m.get(key).cloned()),
-            Err(_) => Err("map lock is poisoned".into()),
+            Err(_) => bail!("map lock is poisoned"),
         }
     }
 
-    fn set(&self, key: &str, val: &T) -> Result<(), Box<dyn Error + Send + Sync>> {
+    fn set(&self, key: &str, val: &T) -> Result<()> {
         match &mut self.map.write() {
             Ok(m) => {
                 m.insert(key.to_string(), val.clone());
             }
-            Err(_) => return Err("map lock is poisoned".into()),
+            Err(_) => bail!("map lock is poisoned"),
         }
 
         self.store_to_disk()
     }
 
-    fn flush(&self) -> Result<(), Box<dyn Error + Send + Sync>> {
+    fn flush(&self) -> Result<()> {
         match &mut self.map.write() {
             Ok(m) => {
                 m.clear();
             }
-            Err(_) => return Err("map lock is poisoned".into()),
+            Err(_) => bail!("map lock is poisoned"),
         }
 
         self.store_to_disk()

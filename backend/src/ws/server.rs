@@ -1,9 +1,8 @@
 use super::middleware::AddCache;
 use crate::{
     cache::CacheDriver,
-    errors::{StatusError, StringError},
+    errors::StatusError,
     images,
-    interlock::Interlock,
     models::{DimensionsOpt, Image},
     storage::StorageDriver,
 };
@@ -13,40 +12,31 @@ use actix_web::{
     web::{self, Data},
     App, Error, HttpResponse, HttpServer,
 };
+use anyhow::Result;
 use std::{
     io::{self, copy},
     sync::Arc,
 };
 
-type InterlockResult = Arc<Result<Vec<Image>, StringError>>;
-
 async fn get_meta_list(
     storage: Data<StorageDriver>,
     cache: Data<CacheDriver<Image>>,
-    interlock: Data<Interlock<InterlockResult>>,
 ) -> Result<HttpResponse, Error> {
-    let res = interlock.get(|| {
-        let r = images::list(storage.clone().into_inner(), cache.clone().into_inner());
-        Arc::new(r)
-    });
+    let res = images::list(storage.into_inner(), cache.into_inner());
 
-    let v = match &*res {
+    let v = match res {
         Ok(v) => Ok(v),
-        Err(e) => Err(actix_web::error::ErrorInternalServerError(e.clone())),
+        Err(e) => Err(actix_web::error::ErrorInternalServerError(e)),
     }?;
 
-    // let res = *res.clone();
-    // let res = res.map_err(actix_web::error::ErrorInternalServerError)?;
-
     Ok(HttpResponse::Ok().json(v))
-    // Ok(HttpResponse::Ok().finish())
 }
 
 async fn get_meta(
     cache: Data<CacheDriver<Image>>,
     id: web::Path<String>,
 ) -> Result<HttpResponse, Error> {
-    let res = images::cached_details(&cache, id.as_str()).map_err(|e| map_err(e))?;
+    let res = images::cached_details(&cache, id.as_str()).map_err(map_err)?;
 
     Ok(HttpResponse::Ok().json(res))
 }
@@ -55,7 +45,7 @@ async fn get_image(
     storage: Data<StorageDriver>,
     id: web::Path<String>,
 ) -> Result<HttpResponse, Error> {
-    let mut res = images::data(&storage, id.as_str()).map_err(|e| map_err(e))?;
+    let mut res = images::data(&storage, id.as_str()).map_err(map_err)?;
     let mut v = Vec::<u8>::new();
     copy(&mut res, &mut v)?;
     Ok(HttpResponse::Ok().body(v))
@@ -86,8 +76,6 @@ pub async fn run(
     storage: Arc<StorageDriver>,
     cache: Arc<CacheDriver<Image>>,
 ) -> std::io::Result<()> {
-    let interlock = Arc::new(Interlock::<InterlockResult>::new());
-
     HttpServer::new(move || {
         let mut cors = Cors::default()
             .allow_any_header()
@@ -115,14 +103,13 @@ pub async fn run(
             .wrap(cors)
             .app_data(Data::from(cache.clone()))
             .app_data(Data::from(storage.clone()))
-            .app_data(Data::from(interlock.clone()))
     })
     .bind((addr, port))?
     .run()
     .await
 }
 
-fn map_err(e: Box<dyn std::error::Error>) -> Error {
+fn map_err(e: anyhow::Error) -> Error {
     if e.is::<io::Error>()
         && e.downcast_ref::<io::Error>().unwrap().kind() == io::ErrorKind::NotFound
     {

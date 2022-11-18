@@ -1,18 +1,18 @@
 use crate::{
     cache::CacheDriver,
-    errors::{StatusError, StringError},
+    errors::StatusError,
     models::{BlurHash, Dimensions, Exif, Image},
     storage::{spec::ReadSeek, StorageDriver},
     tenary,
 };
 use actix_web::http::StatusCode;
+use anyhow::Result;
 use chrono::{NaiveDate, Utc};
 use exif::{In, Tag, Value};
 use image::{GenericImageView, ImageOutputFormat};
 use log::{debug, error, info, warn};
 use once_cell::sync::OnceCell;
 use std::{
-    error::Error,
     io::{BufReader, Cursor, Read, Seek, SeekFrom},
     path::Path,
     sync::{mpsc::channel, Arc, Mutex},
@@ -28,10 +28,7 @@ pub fn get_pool() -> &'static Mutex<threadpool::ThreadPool> {
     POOL.get_or_init(|| Mutex::new(ThreadPool::new(num_cpus::get())))
 }
 
-pub fn cached_details(
-    cache: &CacheDriver<Image>,
-    id: &str,
-) -> Result<Option<Image>, Box<dyn Error + Send + Sync>> {
+pub fn cached_details(cache: &CacheDriver<Image>, id: &str) -> Result<Option<Image>> {
     let v = cache.get(format!("imgmeta-{id}").as_str())?;
     Ok(v)
 }
@@ -40,12 +37,12 @@ pub fn cache_all_images(
     storage: Arc<StorageDriver>,
     cache: Arc<CacheDriver<Image>>,
     block: bool,
-) -> Result<(), StringError> {
-    let item_ids = storage.list(CONTENT_BUCKET).map_err(StringError)?;
+) -> Result<()> {
+    let item_ids = storage.list(CONTENT_BUCKET)?;
 
     let pool = get_pool()
         .lock()
-        .map_err(|_| StringError("locking thread poool failed".into()))?;
+        .map_err(|_| anyhow::anyhow!("locking thread poool failed"))?;
     let (tx, rx) = channel();
 
     let n_items = item_ids.len();
@@ -68,7 +65,7 @@ pub fn cache_all_images(
     if block {
         match rx.iter().take(n_items).collect::<Result<Vec<_>, _>>() {
             Ok(r) => r,
-            Err(e) => return Err(StringError(e)),
+            Err(e) => return Err(e),
         };
     }
 
@@ -79,8 +76,10 @@ pub fn cache_single_image(
     storage: Arc<StorageDriver>,
     cache: Arc<CacheDriver<Image>>,
     id: String,
-) -> Result<(), Box<dyn Error>> {
-    let pool = get_pool().lock()?;
+) -> Result<()> {
+    let pool = get_pool()
+        .lock()
+        .map_err(|_| anyhow::anyhow!("locking on threadpool failed"))?;
 
     pool.execute(move || {
         let res = image_details(&storage, &cache, &id);
@@ -92,13 +91,9 @@ pub fn cache_single_image(
     Ok(())
 }
 
-pub fn list(
-    storage: Arc<StorageDriver>,
-    cache: Arc<CacheDriver<Image>>,
-) -> Result<Vec<Image>, StringError> {
+pub fn list(storage: Arc<StorageDriver>, cache: Arc<CacheDriver<Image>>) -> Result<Vec<Image>> {
     let mut res: Vec<Image> = storage
-        .list(CONTENT_BUCKET)
-        .map_err(StringError)?
+        .list(CONTENT_BUCKET)?
         .iter()
         .map(|id| cached_details(&cache, id))
         .map(|r| {
@@ -117,10 +112,7 @@ pub fn list(
     Ok(res)
 }
 
-pub fn data(
-    storage: &StorageDriver,
-    id: &str,
-) -> Result<Box<dyn ReadSeek>, Box<dyn Error + Send + Sync>> {
+pub fn data(storage: &StorageDriver, id: &str) -> Result<Box<dyn ReadSeek>> {
     storage.read(CONTENT_BUCKET, id)
 }
 
@@ -129,12 +121,13 @@ pub fn thumbnail(
     id: &str,
     width: u32,
     height: u32,
-) -> Result<Box<dyn ReadSeek>, Box<dyn Error>> {
+) -> Result<Box<dyn ReadSeek>> {
     if width == 0 && height == 0 {
-        return Err(Box::new(StatusError::wrap(
+        return Err(StatusError::wrap(
             "with and height can not be both 0".into(),
             StatusCode::BAD_REQUEST,
-        )));
+        )
+        .into());
     }
 
     let thumbnail_id = format!("{id}_{width}x{height}");
@@ -191,7 +184,7 @@ fn get_exif_field(exif_meta: &exif::Exif, tag: Tag) -> Option<String> {
 fn image_reader<'a, R>(
     buf_data: &'a mut BufReader<R>,
     id: &str,
-) -> Result<image::io::Reader<&'a mut BufReader<R>>, Box<dyn Error + Send + Sync>>
+) -> Result<image::io::Reader<&'a mut BufReader<R>>>
 where
     R: Read + Seek,
 {
@@ -210,9 +203,7 @@ where
     Ok(image_reader)
 }
 
-fn extract_exif(
-    mut buf_data: BufReader<Box<dyn ReadSeek>>,
-) -> Result<Exif, Box<dyn Error + Send + Sync>> {
+fn extract_exif(mut buf_data: BufReader<Box<dyn ReadSeek>>) -> Result<Exif> {
     let exif_reader = exif::Reader::new();
     let exif_meta = exif_reader.read_from_container(&mut buf_data)?;
 
@@ -252,11 +243,7 @@ fn extract_exif(
     })
 }
 
-fn image_details(
-    storage: &StorageDriver,
-    cache: &CacheDriver<Image>,
-    id: &str,
-) -> Result<Image, Box<dyn Error + Send + Sync>> {
+fn image_details(storage: &StorageDriver, cache: &CacheDriver<Image>, id: &str) -> Result<Image> {
     info!("Collecting image details for {id} ...");
 
     let data = storage.read(CONTENT_BUCKET, id)?;

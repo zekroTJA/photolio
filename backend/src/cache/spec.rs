@@ -1,7 +1,7 @@
-use std::error::Error;
+use anyhow::Result;
 
 pub trait Cache<T> {
-    fn get(&self, key: &str) -> Result<Option<T>, Box<dyn Error + Send + Sync>>;
-    fn set(&self, key: &str, val: &T) -> Result<(), Box<dyn Error + Send + Sync>>;
-    fn flush(&self) -> Result<(), Box<dyn Error + Send + Sync>>;
+    fn get(&self, key: &str) -> Result<Option<T>>;
+    fn set(&self, key: &str, val: &T) -> Result<()>;
+    fn flush(&self) -> Result<()>;
 }

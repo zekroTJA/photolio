@@ -2,7 +2,6 @@ mod cache;
 mod conf;
 mod errors;
 mod images;
-mod interlock;
 mod models;
 mod storage;
 mod watcher;

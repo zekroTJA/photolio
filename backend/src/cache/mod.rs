@@ -4,8 +4,9 @@ pub mod spec;
 
 use self::{inmemory::InMemory, redis::Redis, spec::Cache};
 use crate::conf::CacheConfig;
+use anyhow::{bail, Result};
 use serde::{de::DeserializeOwned, Serialize};
-use std::{error::Error, ops::Deref};
+use std::ops::Deref;
 
 pub enum CacheDriver<T> {
     InMemory(InMemory<T>),
@@ -16,7 +17,7 @@ impl<T> CacheDriver<T>
 where
     T: Clone + Serialize + DeserializeOwned,
 {
-    pub fn new(cfg: &CacheConfig) -> Result<Self, Box<dyn Error>> {
+    pub fn new(cfg: &CacheConfig) -> Result<Self> {
         match cfg.typ.clone().unwrap_or_else(|| "memory".into()).as_str() {
             "memory" => {
                 if let Some(cachelocation) = cfg.cachelocation.clone() {
@@ -31,10 +32,10 @@ where
                 if let Some(redisaddress) = cfg.redisaddress.clone() {
                     redis::Redis::new(&redisaddress).map(|d| CacheDriver::Redis(d))
                 } else {
-                    Err("no redis address has been specified".into())
+                    bail!("no redis address has been specified")
                 }
             }
-            _ => Err("invalid or unsupported cache driver specified".into()),
+            _ => bail!("no redis address has been specified"),
         }
     }
 }
