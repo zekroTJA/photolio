@@ -220,15 +220,10 @@ fn extract_exif(mut buf_data: BufReader<Box<dyn ReadSeek>>) -> Result<Exif> {
         },
         _ => None,
     }
-    .map(|v| {
-        chrono::DateTime::from_utc(
-            NaiveDate::from_ymd(v.year.into(), v.month.into(), v.day.into()).and_hms(
-                v.hour.into(),
-                v.minute.into(),
-                v.second.into(),
-            ),
-            Utc,
-        )
+    .and_then(|v| {
+        NaiveDate::from_ymd_opt(v.year.into(), v.month.into(), v.day.into())
+            .and_then(|dt| dt.and_hms_opt(v.hour.into(), v.minute.into(), v.second.into()))
+            .map(|dt| chrono::DateTime::from_utc(dt, Utc))
     });
 
     Ok(Exif {
