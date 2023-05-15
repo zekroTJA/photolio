@@ -13,7 +13,6 @@ jobs:
     name: Deploy to Pages
     runs-on: ubuntu-latest
     steps:
-
       - name: Setup Node
         uses: actions/setup-node@v1
         with:
@@ -29,7 +28,7 @@ jobs:
       - name: Build Static Content
         working-directory: webapp
         env:
-          REACT_APP_API_ROOT_URL: "https://gallery-api.zekro.de"
+          REACT_APP_API_ROOT_URL: "https://dvbkeaxv2fqwj.cloudfront.net"
         run: npm run build
 
       - name: Mirror index.html to 404.html
