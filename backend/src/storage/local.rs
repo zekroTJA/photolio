@@ -29,7 +29,6 @@ impl Storage for Local {
     }
 
     fn store(&self, bucket: &str, name: &str, content: &mut dyn Read) -> Result<()> {
-        self.create_bucket_if_not_exists(bucket)?;
         let mut file = fs::File::create(self.bucket_path(bucket).join(name))?;
         copy(content, &mut file)?;
         Ok(())

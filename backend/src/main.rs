@@ -75,6 +75,8 @@ async fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
+    images::prepare(&s).expect("Preparation failed");
+
     if !cfg.skipprecache.unwrap_or(false) {
         info!("Pre-caching image metadata for all images ...");
         images::cache_all_images(s.clone(), c.clone(), false).expect("pre-cache failed");

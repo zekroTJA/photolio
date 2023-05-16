@@ -28,6 +28,12 @@ pub fn get_pool() -> &'static Mutex<threadpool::ThreadPool> {
     POOL.get_or_init(|| Mutex::new(ThreadPool::new(num_cpus::get())))
 }
 
+pub fn prepare(storage: &StorageDriver) -> Result<()> {
+    storage.create_bucket_if_not_exists(CONTENT_BUCKET)?;
+    storage.create_bucket_if_not_exists(THUMBNAILS_BUCKET)?;
+    Ok(())
+}
+
 pub fn cached_details(cache: &CacheDriver<Image>, id: &str) -> Result<Option<Image>> {
     let v = cache.get(format!("imgmeta-{id}").as_str())?;
     Ok(v)
