@@ -1,15 +1,13 @@
-use std::{error::Error, sync::Arc};
-
-use futures::{channel::mpsc::Receiver, SinkExt, StreamExt};
-use log::{debug, error, info};
-use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Result, Watcher};
-
 use crate::{
     cache::CacheDriver,
     images::{self, CONTENT_BUCKET},
     models::Image,
     storage::StorageDriver,
 };
+use futures::{channel::mpsc::Receiver, SinkExt, StreamExt};
+use log::{debug, error, info};
+use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Result, Watcher};
+use std::{error::Error, sync::Arc};
 
 fn async_watcher() -> Result<(RecommendedWatcher, Receiver<Result<Event>>)> {
     let (mut tx, rx) = futures::channel::mpsc::channel(1);
@@ -30,6 +28,7 @@ fn handle_event(storage: Arc<StorageDriver>, cache: Arc<CacheDriver<Image>>, eve
     for id in event
         .paths
         .iter()
+        .filter(|p| images::is_image(p))
         .filter_map(|p| p.file_name())
         .map(|p| p.to_string_lossy().to_string())
     {

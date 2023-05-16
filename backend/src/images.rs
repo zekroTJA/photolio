@@ -14,6 +14,7 @@ use log::{debug, error, info, warn};
 use once_cell::sync::OnceCell;
 use std::{
     io::{BufReader, Cursor, Read, Seek, SeekFrom},
+    ops::Deref,
     path::Path,
     sync::{mpsc::channel, Arc, Mutex},
 };
@@ -44,7 +45,12 @@ pub fn cache_all_images(
     cache: Arc<CacheDriver<Image>>,
     block: bool,
 ) -> Result<()> {
-    let item_ids = storage.list(CONTENT_BUCKET)?;
+    let item_ids: Vec<String> = storage
+        .list(CONTENT_BUCKET)?
+        .iter()
+        .filter(|id| is_image(Path::new(id)))
+        .cloned()
+        .collect();
 
     let pool = get_pool()
         .lock()
@@ -309,4 +315,11 @@ fn image_details(storage: &StorageDriver, cache: &CacheDriver<Image>, id: &str) 
     }
 
     Ok(image)
+}
+
+pub fn is_image(p: &Path) -> bool {
+    let Some(ext) = p.extension() else {
+        return false;
+    };
+    ["jpg", "jpeg", "tiff", "png", "webp", "gif"].contains(&ext.to_string_lossy().deref())
 }
