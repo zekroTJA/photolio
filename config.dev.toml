@@ -1,7 +1,7 @@
 skipprecache = false
 
 [storage]
-location = "../data"
+location = "data"
 
 [server]
 port = 5000

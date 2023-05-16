@@ -1,5 +1,8 @@
 {
   "terminal.integrated.env.linux": {
     "RUST_LOG": "debug"
+  },
+  "terminal.integrated.env.osx": {
+    "RUST_LOG": "debug"
   }
 }
