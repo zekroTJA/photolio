@@ -90,7 +90,6 @@ impl Storage for Local {
 
     fn meta(&self, bucket: &str, name: &str) -> Result<Option<(Metadata, Option<String>)>> {
         let file = self.get_object_deep(bucket, name)?;
-        dbg!(&file);
         let meta = file
             .map(|(f, dir)| f.metadata().map(|meta| (meta, dir)))
             .transpose()?;
