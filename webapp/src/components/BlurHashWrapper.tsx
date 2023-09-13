@@ -1,8 +1,8 @@
-import { ImageModel } from 'models/ImageModel';
-import { useState } from 'react';
 import { Blurhash } from 'react-blurhash';
-import styled from 'styled-components';
+import { ImageModel } from 'models/ImageModel';
 import { Transition } from 'react-transition-group';
+import styled from 'styled-components';
+import { useState } from 'react';
 
 interface ImageProps {
   imageURL: string;
@@ -37,6 +37,7 @@ const BlurhashContainer = styled(Blurhash)<ContainerProps>`
 
 const Container = styled.div`
   position: relative;
+  cursor: pointer;
 
   &:hover #hover-container {
     opacity: 1;

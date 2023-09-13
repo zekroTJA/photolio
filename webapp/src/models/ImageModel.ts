@@ -1,6 +1,7 @@
 export interface ImageModel {
   id: string;
   name: string;
+  group?: string;
   timestamp: string;
   blurhash: BlurHash;
   dimensions: Dimensions;

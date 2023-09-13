@@ -4,5 +4,8 @@
   },
   "terminal.integrated.env.osx": {
     "RUST_LOG": "debug"
+  },
+  "terminal.integrated.env.windows": {
+    "RUST_LOG": "debug"
   }
 }

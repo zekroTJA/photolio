@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+
+import { BlurHashWrapper } from 'components/BlurHashWrapper';
 import { ImageModel } from 'models/ImageModel';
 import ImageService from 'services/ImageService';
-import { BlurHashWrapper } from 'components/BlurHashWrapper';
-import styled from 'styled-components';
 import Masonry from 'react-masonry-css';
+import styled from 'styled-components';
 import { useHistory } from 'react-router';
 
 const IMAGE_SIZE = 250;
@@ -19,9 +20,23 @@ const GRID_BREAKPOINTS = (() => {
   return breakpoints;
 })();
 
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+`;
+
+const GroupContainer = styled.div`
+  > h2 {
+    opacity: 0.6;
+    font-weight: 300;
+    font-size: 1.2rem;
+  }
+`;
+
 const Grid = styled(Masonry)`
   display: flex;
-  justify-content: center;
+  justify-content: start;
 
   > div {
     width: fit-content !important;
@@ -32,27 +47,51 @@ const Grid = styled(Masonry)`
   }
 `;
 
+type ImageGroups = [string, ImageModel[]][];
+
+const groupImages = (images: ImageModel[]) => {
+  const map: { [key: string]: ImageModel[] } = {};
+
+  images.forEach((img) => {
+    const group = img.group ?? '';
+    if (group in map) {
+      map[group].push(img);
+    } else {
+      map[group] = [img];
+    }
+  });
+
+  const groups: ImageGroups = Object.keys(map).map((key) => [key, map[key]]);
+
+  groups.push(groups.shift()!);
+
+  return groups;
+};
+
 export const HomeRoute: React.FC = () => {
-  const [images, setImages] = useState<ImageModel[]>();
+  const [images, setImages] = useState<ImageGroups>();
   const history = useHistory();
 
   useEffect(() => {
-    ImageService.list().then(setImages);
-  }, [setImages]);
+    ImageService.list().then((images) => setImages(groupImages(images)));
+  }, []);
 
-  const imageTiles = images?.map((img) => (
-    <BlurHashWrapper
-      key={img.id}
-      image={img}
-      width={IMAGE_SIZE}
-      imageURL={ImageService.getThumbnailSource(img.id, IMAGE_SIZE)}
-      onClick={(id) => history.push(`/images/${id}`)}
-    />
+  const imageGroups = images?.map(([heading, images]) => (
+    <GroupContainer>
+      <h2>{heading || <>&nbsp;</>}</h2>
+      <Grid className="" breakpointCols={GRID_BREAKPOINTS}>
+        {images.map((img) => (
+          <BlurHashWrapper
+            key={img.id}
+            image={img}
+            width={IMAGE_SIZE}
+            imageURL={ImageService.getThumbnailSource(img.id, IMAGE_SIZE)}
+            onClick={(id) => history.push(`/images/${id}`)}
+          />
+        ))}
+      </Grid>
+    </GroupContainer>
   ));
 
-  return (
-    <Grid className="" breakpointCols={GRID_BREAKPOINTS}>
-      {imageTiles}
-    </Grid>
-  );
+  return <Container>{imageGroups || <></>}</Container>;
 };
