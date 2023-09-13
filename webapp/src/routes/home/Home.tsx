@@ -63,7 +63,8 @@ const groupImages = (images: ImageModel[]) => {
 
   const groups: ImageGroups = Object.keys(map).map((key) => [key, map[key]]);
 
-  groups.push(groups.shift()!);
+  const i = groups.findIndex(([group, _]) => group === '');
+  groups.push(...groups.splice(i, 1));
 
   return groups;
 };
