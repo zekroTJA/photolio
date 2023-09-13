@@ -1,7 +1,7 @@
 use super::spec::{ReadSeek, Storage};
 use anyhow::Result;
 use std::{
-    fs::{self, DirEntry, File, Metadata},
+    fs::{self, DirEntry, Metadata},
     io::{copy, ErrorKind, Read},
     path::{Path, PathBuf},
 };
