@@ -14,13 +14,13 @@ pub trait Storage {
 
     fn store(&self, bucket: &str, name: &str, content: &mut dyn Read) -> Result<()>;
 
-    fn read(&self, bucket: &str, name: &str) -> Result<Box<dyn ReadSeek>>;
+    fn read(&self, bucket: &str, name: &str) -> Result<Option<Box<dyn ReadSeek>>>;
 
-    fn meta(&self, bucket: &str, name: &str) -> Result<Metadata>;
+    fn meta(&self, bucket: &str, name: &str) -> Result<Option<(Metadata, Option<String>)>>;
 
     fn exists(&self, bucket: &str, name: &str) -> Result<bool>;
 
-    fn list(&self, bucket: &str) -> Result<Vec<String>>;
+    fn list(&self, bucket: &str) -> Result<Vec<(String, Option<String>)>>;
 
     fn get_bucket_path(&self, bucket: &str) -> Option<PathBuf>;
 }

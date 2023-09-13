@@ -48,7 +48,8 @@ pub fn cache_all_images(
     let item_ids: Vec<String> = storage
         .list(CONTENT_BUCKET)?
         .iter()
-        .filter(|id| is_image(Path::new(id)))
+        .filter(|(id, _)| is_image(Path::new(id)))
+        .map(|(id, _)| id)
         .cloned()
         .collect();
 
@@ -107,16 +108,17 @@ pub fn list(storage: Arc<StorageDriver>, cache: Arc<CacheDriver<Image>>) -> Resu
     let mut res: Vec<Image> = storage
         .list(CONTENT_BUCKET)?
         .iter()
-        .map(|id| cached_details(&cache, id))
-        .map(|r| {
+        .map(|(id, group)| {
+            cached_details(&cache, id).map(|d| d.map(|d| d.with_group(group.clone())))
+        })
+        .filter_map(|r| {
             if let Err(err) = &r {
                 error!("Failed getting image from cache: {}", err);
             }
             debug!("{:#?}", r);
             r.ok()
         })
-        .filter(|r| r.is_some())
-        .filter_map(|r| r.unwrap())
+        .flatten()
         .collect();
 
     res.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
@@ -124,7 +126,7 @@ pub fn list(storage: Arc<StorageDriver>, cache: Arc<CacheDriver<Image>>) -> Resu
     Ok(res)
 }
 
-pub fn data(storage: &StorageDriver, id: &str) -> Result<Box<dyn ReadSeek>> {
+pub fn data(storage: &StorageDriver, id: &str) -> Result<Option<Box<dyn ReadSeek>>> {
     storage.read(CONTENT_BUCKET, id)
 }
 
@@ -133,7 +135,7 @@ pub fn thumbnail(
     id: &str,
     width: u32,
     height: u32,
-) -> Result<Box<dyn ReadSeek>> {
+) -> Result<Option<Box<dyn ReadSeek>>> {
     if width == 0 && height == 0 {
         return Err(StatusError::wrap(
             "with and height can not be both 0".into(),
@@ -154,9 +156,8 @@ pub fn thumbnail(
 
     info!("Generating thumbnail for {id} ...");
 
-    let reader = match storage.read(CONTENT_BUCKET, id) {
-        Ok(r) => r,
-        Err(e) => return Err(e),
+    let Some(reader) = storage.read(CONTENT_BUCKET, id)? else {
+        return Ok(None);
     };
 
     let mut buf_data = BufReader::new(reader);
@@ -184,7 +185,7 @@ pub fn thumbnail(
     storage.store(THUMBNAILS_BUCKET, thumbnail_id.as_str(), &mut buf)?;
 
     buf.seek(SeekFrom::Start(0))?;
-    Ok(Box::new(buf))
+    Ok(Some(Box::new(buf)))
 }
 
 fn get_exif_field(exif_meta: &exif::Exif, tag: Tag) -> Option<String> {
@@ -250,10 +251,17 @@ fn extract_exif(mut buf_data: BufReader<Box<dyn ReadSeek>>) -> Result<Exif> {
     })
 }
 
-fn image_details(storage: &StorageDriver, cache: &CacheDriver<Image>, id: &str) -> Result<Image> {
+fn image_details(
+    storage: &StorageDriver,
+    cache: &CacheDriver<Image>,
+    id: &str,
+) -> Result<Option<Image>> {
     info!("Collecting image details for {id} ...");
 
-    let data = storage.read(CONTENT_BUCKET, id)?;
+    let Some(data) = storage.read(CONTENT_BUCKET, id)? else {
+        return Ok(None);
+    };
+
     let mut buf_data = BufReader::new(data);
 
     let image_reader = image_reader(&mut buf_data, id)?;
@@ -292,11 +300,14 @@ fn image_details(storage: &StorageDriver, cache: &CacheDriver<Image>, id: &str) 
         image.to_rgba8().to_vec().as_slice(),
     );
 
-    let meta = storage.meta(CONTENT_BUCKET, id)?;
+    let Some((meta, group)) = storage.meta(CONTENT_BUCKET, id)? else {
+        return Ok(None);
+    };
 
     let image = Image {
         id: id.to_string(),
         name: id.to_string(),
+        group,
         timestamp: meta.modified()?.into(),
         blurhash: BlurHash {
             hash: b_hash,
@@ -314,7 +325,7 @@ fn image_details(storage: &StorageDriver, cache: &CacheDriver<Image>, id: &str) 
         error!("failed storing result to cache: {err}");
     }
 
-    Ok(image)
+    Ok(Some(image))
 }
 
 pub fn is_image(p: &Path) -> bool {

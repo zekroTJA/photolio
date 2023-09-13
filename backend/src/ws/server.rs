@@ -45,7 +45,9 @@ async fn get_image(
     storage: Data<StorageDriver>,
     id: web::Path<String>,
 ) -> Result<HttpResponse, Error> {
-    let mut res = images::data(&storage, id.as_str()).map_err(map_err)?;
+    let Some(mut res) = images::data(&storage, id.as_str()).map_err(map_err)? else {
+        return Ok(HttpResponse::NotFound().finish());
+    };
     let mut v = Vec::<u8>::new();
     copy(&mut res, &mut v)?;
     Ok(HttpResponse::Ok().body(v))
@@ -60,7 +62,11 @@ async fn get_image_thumbnail(
         dimensions.width.unwrap_or(0),
         dimensions.height.unwrap_or(0),
     );
-    let mut res = images::thumbnail(&storage, id.as_str(), width, height).map_err(map_err)?;
+
+    let Some(mut res) = images::thumbnail(&storage, id.as_str(), width, height).map_err(map_err)?
+    else {
+        return Ok(HttpResponse::NotFound().finish());
+    };
 
     let mut v = Vec::<u8>::new();
     copy(&mut res, &mut v)?;

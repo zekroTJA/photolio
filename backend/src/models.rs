@@ -35,8 +35,16 @@ pub struct Exif {
 pub struct Image {
     pub id: String,
     pub name: String,
+    pub group: Option<String>,
     pub timestamp: DateTime<Utc>,
     pub blurhash: BlurHash,
     pub dimensions: Dimensions,
     pub exif: Option<Exif>,
+}
+
+impl Image {
+    pub fn with_group(mut self, group: Option<String>) -> Self {
+        self.group = group;
+        self
+    }
 }
