@@ -9,6 +9,10 @@ use std::{
     sync::RwLock,
 };
 
+/// [Cache](Cache) implementation for in-memory storage.
+///
+/// When enabled, this implementation can also store and load entries
+/// in a JSON file on local disk.
 pub struct InMemory<T> {
     disk_file: Option<String>,
     map: RwLock<HashMap<String, T>>,
@@ -18,14 +22,18 @@ impl<T> InMemory<T>
 where
     T: Clone + DeserializeOwned + Serialize,
 {
-    pub fn new() -> Self {
+    /// Creates a new instance of [InMemory](InMemory) with no persistent storage.
+    pub fn new_volatile() -> Self {
         InMemory {
             map: HashMap::new().into(),
             disk_file: None,
         }
     }
 
-    pub fn load(file_name: &str) -> io::Result<Self> {
+    /// Creates a new instance of [InMemory](InMemory) with persistent storage to
+    /// the given `file_name` location. If the file does not exist, it will be
+    /// created.
+    pub fn new_persistent(file_name: &str) -> io::Result<Self> {
         info!("Loading memory cache from diks");
 
         let file = OpenOptions::new()
@@ -47,6 +55,8 @@ where
         })
     }
 
+    /// Store the entries stored in the cache map on disk if persistency
+    /// is enabled.
     fn store_to_disk(&self) -> Result<()> {
         let file_name = match self.disk_file.clone() {
             Some(f) => f,

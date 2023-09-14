@@ -21,11 +21,13 @@ where
         match cfg {
             CacheConfig::InMemory { cachelocation } => {
                 if let Some(cachelocation) = cachelocation {
-                    let d = inmemory::InMemory::<T>::load(cachelocation)
+                    let d = inmemory::InMemory::<T>::new_persistent(cachelocation)
                         .map(|d| CacheDriver::InMemory(d))?;
                     Ok(d)
                 } else {
-                    Ok(CacheDriver::InMemory(inmemory::InMemory::<T>::new()))
+                    Ok(CacheDriver::InMemory(
+                        inmemory::InMemory::<T>::new_volatile(),
+                    ))
                 }
             }
             CacheConfig::Redis { redisaddress } => {

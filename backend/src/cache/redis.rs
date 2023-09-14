@@ -4,6 +4,7 @@ use log::info;
 use redis::Commands;
 use serde::{de::DeserializeOwned, Serialize};
 
+/// [`Cache`](Cache) implementation for Redis.
 pub struct Redis {
     client: redis::Client,
 }
@@ -11,14 +12,23 @@ pub struct Redis {
 impl Redis {
     const KEY_PREFIX: &'static str = "PHCACHE:";
 
+    /// Create a new instance of [Redis](Redis) with the given Redis
+    /// address and connect to it.
+    ///
+    /// # Example
+    /// ```
+    /// let client = Redis::new("redis://127.0.0.1:6379/1")?;
+    /// ```
     pub fn new(addr: &str) -> Result<Self> {
         let client = redis::Client::open(addr)?;
         client.get_connection()?;
         Ok(Redis { client })
     }
 
-    pub fn key(key: &str) -> String {
-        Self::KEY_PREFIX.to_owned() + key
+    /// Returns the given `key` prefixed with the specified
+    /// `KEY_PREFIX`.
+    fn key(key: &str) -> String {
+        format!("{}{}", Self::KEY_PREFIX, key)
     }
 }
 

@@ -15,6 +15,7 @@ use actix_web::{
 use anyhow::Result;
 use std::{
     io::{self, copy},
+    net,
     sync::Arc,
 };
 
@@ -72,9 +73,13 @@ async fn get_image_thumbnail(
         .body(v))
 }
 
+/// Initializes and starts the web server on the given `address` with the
+/// passed `storage` and `cache` instances.
+///
+/// If `Some(origin)` is passed, it will be set as `Access-Control-Allow-Origin`
+/// header value. Otherwise, the value of the header will be a wildcard (`*`).
 pub async fn run(
-    addr: &str,
-    port: u16,
+    address: impl net::ToSocketAddrs,
     origin: Option<String>,
     storage: Arc<Storage>,
     cache: Arc<CacheDriver<Image>>,
@@ -107,20 +112,22 @@ pub async fn run(
             .app_data(Data::from(cache.clone()))
             .app_data(Data::from(storage.clone()))
     })
-    .bind((addr, port))?
+    .bind(address)?
     .run()
     .await
 }
 
-fn map_err(e: anyhow::Error) -> Error {
-    if e.is::<io::Error>()
-        && e.downcast_ref::<io::Error>().unwrap().kind() == io::ErrorKind::NotFound
+/// Takes an [Anyhow Error](anyhow::Error) and returns an [Actix Error](Error)
+/// depending on the underlying error in the passed `error`.
+fn map_err(error: anyhow::Error) -> Error {
+    if error.is::<io::Error>()
+        && error.downcast_ref::<io::Error>().unwrap().kind() == io::ErrorKind::NotFound
     {
-        actix_web::error::ErrorNotFound(e)
-    } else if e.is::<StatusError>() {
-        let status = e.downcast_ref::<StatusError>().unwrap().status();
-        actix_web::error::InternalError::new(e, status).into()
+        actix_web::error::ErrorNotFound(error)
+    } else if error.is::<StatusError>() {
+        let status = error.downcast_ref::<StatusError>().unwrap().status();
+        actix_web::error::InternalError::new(error, status).into()
     } else {
-        actix_web::error::ErrorInternalServerError(e)
+        actix_web::error::ErrorInternalServerError(error)
     }
 }
