@@ -17,7 +17,8 @@ use env_logger::Env;
 use log::{debug, error, info, warn};
 use models::Image;
 use std::{io, sync::Arc};
-use storage::local::Local;
+
+use crate::storage::Storage;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -62,9 +63,7 @@ async fn main() -> std::io::Result<()> {
         .unwrap_or_default()
         .location
         .unwrap_or_else(|| "data".into());
-    let s = Arc::new(storage::StorageDriver::Local(Local::new(
-        storage_loc.as_str(),
-    )));
+    let s = Arc::new(Storage::new(storage_loc.as_str()));
 
     if flush_cache {
         info!("Flushing image meta cache ...");

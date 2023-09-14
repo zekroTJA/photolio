@@ -2,7 +2,7 @@ use crate::{
     cache::CacheDriver,
     images::{self, CONTENT_BUCKET},
     models::Image,
-    storage::StorageDriver,
+    storage::Storage,
 };
 use futures::{channel::mpsc::Receiver, SinkExt, StreamExt};
 use log::{debug, error, info};
@@ -24,7 +24,7 @@ fn async_watcher() -> Result<(RecommendedWatcher, Receiver<Result<Event>>)> {
     Ok((watcher, rx))
 }
 
-fn handle_event(storage: Arc<StorageDriver>, cache: Arc<CacheDriver<Image>>, event: Event) {
+fn handle_event(storage: Arc<Storage>, cache: Arc<CacheDriver<Image>>, event: Event) {
     for id in event
         .paths
         .iter()
@@ -39,7 +39,7 @@ fn handle_event(storage: Arc<StorageDriver>, cache: Arc<CacheDriver<Image>>, eve
 }
 
 pub async fn watch_files(
-    storage: Arc<StorageDriver>,
+    storage: Arc<Storage>,
     cache: Arc<CacheDriver<Image>>,
 ) -> std::result::Result<(), Box<dyn Error>> {
     let (mut watcher, mut rx) = async_watcher()?;

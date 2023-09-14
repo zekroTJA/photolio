@@ -2,7 +2,7 @@ use crate::{
     cache::CacheDriver,
     errors::StatusError,
     models::{BlurHash, Dimensions, Exif, Image},
-    storage::{spec::ReadSeek, StorageDriver},
+    storage::{ReadSeek, Storage},
     tenary,
 };
 use actix_web::http::StatusCode;
@@ -29,7 +29,7 @@ pub fn get_pool() -> &'static Mutex<threadpool::ThreadPool> {
     POOL.get_or_init(|| Mutex::new(ThreadPool::new(num_cpus::get())))
 }
 
-pub fn prepare(storage: &StorageDriver) -> Result<()> {
+pub fn prepare(storage: &Storage) -> Result<()> {
     storage.create_bucket_if_not_exists(CONTENT_BUCKET)?;
     storage.create_bucket_if_not_exists(THUMBNAILS_BUCKET)?;
     Ok(())
@@ -41,7 +41,7 @@ pub fn cached_details(cache: &CacheDriver<Image>, id: &str) -> Result<Option<Ima
 }
 
 pub fn cache_all_images(
-    storage: Arc<StorageDriver>,
+    storage: Arc<Storage>,
     cache: Arc<CacheDriver<Image>>,
     block: bool,
 ) -> Result<()> {
@@ -86,7 +86,7 @@ pub fn cache_all_images(
 }
 
 pub fn cache_single_image(
-    storage: Arc<StorageDriver>,
+    storage: Arc<Storage>,
     cache: Arc<CacheDriver<Image>>,
     id: String,
 ) -> Result<()> {
@@ -104,7 +104,7 @@ pub fn cache_single_image(
     Ok(())
 }
 
-pub fn list(storage: Arc<StorageDriver>, cache: Arc<CacheDriver<Image>>) -> Result<Vec<Image>> {
+pub fn list(storage: Arc<Storage>, cache: Arc<CacheDriver<Image>>) -> Result<Vec<Image>> {
     let mut res: Vec<Image> = storage
         .list(CONTENT_BUCKET)?
         .iter()
@@ -126,12 +126,12 @@ pub fn list(storage: Arc<StorageDriver>, cache: Arc<CacheDriver<Image>>) -> Resu
     Ok(res)
 }
 
-pub fn data(storage: &StorageDriver, id: &str) -> Result<Option<Box<dyn ReadSeek>>> {
+pub fn data(storage: &Storage, id: &str) -> Result<Option<Box<dyn ReadSeek>>> {
     storage.read(CONTENT_BUCKET, id)
 }
 
 pub fn thumbnail(
-    storage: &StorageDriver,
+    storage: &Storage,
     id: &str,
     width: u32,
     height: u32,
@@ -251,11 +251,7 @@ fn extract_exif(mut buf_data: BufReader<Box<dyn ReadSeek>>) -> Result<Exif> {
     })
 }
 
-fn image_details(
-    storage: &StorageDriver,
-    cache: &CacheDriver<Image>,
-    id: &str,
-) -> Result<Option<Image>> {
+fn image_details(storage: &Storage, cache: &CacheDriver<Image>, id: &str) -> Result<Option<Image>> {
     info!("Collecting image details for {id} ...");
 
     let Some(data) = storage.read(CONTENT_BUCKET, id)? else {

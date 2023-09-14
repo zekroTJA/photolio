@@ -4,7 +4,7 @@ use crate::{
     errors::StatusError,
     images,
     models::{DimensionsOpt, Image},
-    storage::StorageDriver,
+    storage::Storage,
 };
 use actix_cors::Cors;
 use actix_web::{
@@ -19,7 +19,7 @@ use std::{
 };
 
 async fn get_meta_list(
-    storage: Data<StorageDriver>,
+    storage: Data<Storage>,
     cache: Data<CacheDriver<Image>>,
 ) -> Result<HttpResponse, Error> {
     let res = images::list(storage.into_inner(), cache.into_inner());
@@ -41,10 +41,7 @@ async fn get_meta(
     Ok(HttpResponse::Ok().json(res))
 }
 
-async fn get_image(
-    storage: Data<StorageDriver>,
-    id: web::Path<String>,
-) -> Result<HttpResponse, Error> {
+async fn get_image(storage: Data<Storage>, id: web::Path<String>) -> Result<HttpResponse, Error> {
     let Some(mut res) = images::data(&storage, id.as_str()).map_err(map_err)? else {
         return Ok(HttpResponse::NotFound().finish());
     };
@@ -54,7 +51,7 @@ async fn get_image(
 }
 
 async fn get_image_thumbnail(
-    storage: Data<StorageDriver>,
+    storage: Data<Storage>,
     id: web::Path<String>,
     web::Query(dimensions): web::Query<DimensionsOpt>,
 ) -> Result<HttpResponse, Error> {
@@ -79,7 +76,7 @@ pub async fn run(
     addr: &str,
     port: u16,
     origin: Option<String>,
-    storage: Arc<StorageDriver>,
+    storage: Arc<Storage>,
     cache: Arc<CacheDriver<Image>>,
 ) -> std::io::Result<()> {
     HttpServer::new(move || {
