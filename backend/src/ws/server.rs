@@ -37,7 +37,9 @@ async fn get_meta(
     cache: Data<CacheDriver<Image>>,
     id: web::Path<String>,
 ) -> Result<HttpResponse, Error> {
-    let res = images::cached_details(&cache, id.as_str()).map_err(map_err)?;
+    let Some(res) = images::cached_details(&cache, id.as_str()).map_err(map_err)? else {
+        return Ok(HttpResponse::NotFound().finish());
+    };
 
     Ok(HttpResponse::Ok().json(res))
 }
