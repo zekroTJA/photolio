@@ -20,10 +20,19 @@ pub struct StorageConfig {
     pub location: Option<String>,
 }
 
-#[derive(Debug, Default, Deserialize)]
-pub struct CacheConfig {
-    #[serde(rename = "type")]
-    pub typ: Option<String>,
-    pub cachelocation: Option<String>,
-    pub redisaddress: Option<String>,
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type")]
+pub enum CacheConfig {
+    #[serde(rename = "memory")]
+    InMemory { cachelocation: Option<String> },
+    #[serde(rename = "redis")]
+    Redis { redisaddress: String },
+}
+
+impl Default for CacheConfig {
+    fn default() -> Self {
+        Self::InMemory {
+            cachelocation: None,
+        }
+    }
 }

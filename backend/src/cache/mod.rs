@@ -4,7 +4,7 @@ pub mod spec;
 
 use self::{inmemory::InMemory, redis::Redis, spec::Cache};
 use crate::conf::CacheConfig;
-use anyhow::{bail, Result};
+use anyhow::Result;
 use serde::{de::DeserializeOwned, Serialize};
 use std::ops::Deref;
 
@@ -18,24 +18,19 @@ where
     T: Clone + Serialize + DeserializeOwned,
 {
     pub fn new(cfg: &CacheConfig) -> Result<Self> {
-        match cfg.typ.clone().unwrap_or_else(|| "memory".into()).as_str() {
-            "memory" => {
-                if let Some(cachelocation) = cfg.cachelocation.clone() {
-                    let d = inmemory::InMemory::<T>::load(&cachelocation)
+        match cfg {
+            CacheConfig::InMemory { cachelocation } => {
+                if let Some(cachelocation) = cachelocation {
+                    let d = inmemory::InMemory::<T>::load(cachelocation)
                         .map(|d| CacheDriver::InMemory(d))?;
                     Ok(d)
                 } else {
                     Ok(CacheDriver::InMemory(inmemory::InMemory::<T>::new()))
                 }
             }
-            "redis" => {
-                if let Some(redisaddress) = cfg.redisaddress.clone() {
-                    redis::Redis::new(&redisaddress).map(|d| CacheDriver::Redis(d))
-                } else {
-                    bail!("no redis address has been specified")
-                }
+            CacheConfig::Redis { redisaddress } => {
+                redis::Redis::new(redisaddress).map(|d| CacheDriver::Redis(d))
             }
-            _ => bail!("no redis address has been specified"),
         }
     }
 }

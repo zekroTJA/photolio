@@ -18,7 +18,6 @@ impl<T> InMemory<T>
 where
     T: Clone + DeserializeOwned + Serialize,
 {
-    #[allow(dead_code)]
     pub fn new() -> Self {
         InMemory {
             map: HashMap::new().into(),
