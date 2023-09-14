@@ -51,20 +51,25 @@ type ImageGroups = [string, ImageModel[]][];
 
 const groupImages = (images: ImageModel[]) => {
   const map: { [key: string]: ImageModel[] } = {};
+  const groupList: string[] = [];
 
   images.forEach((img) => {
     const group = img.group ?? '';
+
     if (group in map) {
       map[group].push(img);
     } else {
+      groupList.push(group);
       map[group] = [img];
     }
   });
 
-  const groups: ImageGroups = Object.keys(map).map((key) => [key, map[key]]);
+  const groups: ImageGroups = groupList.map((key) => [key, map[key]]);
 
   const i = groups.findIndex(([group, _]) => group === '');
-  groups.push(...groups.splice(i, 1));
+  if (i > -1) {
+    groups.push(...groups.splice(i, 1));
+  }
 
   return groups;
 };
@@ -78,7 +83,7 @@ export const HomeRoute: React.FC = () => {
   }, []);
 
   const imageGroups = images?.map(([heading, images]) => (
-    <GroupContainer>
+    <GroupContainer key={heading}>
       <h2>{heading || <>&nbsp;</>}</h2>
       <Grid className="" breakpointCols={GRID_BREAKPOINTS}>
         {images.map((img) => (
