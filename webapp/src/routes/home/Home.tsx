@@ -9,6 +9,7 @@ import { useHistory } from 'react-router';
 
 const IMAGE_SIZE = 250;
 const IMAGE_MARGIN = 5;
+const CONTAINER_PADDING = 10;
 const MAX_COLUMNS = 5;
 
 const GRID_BREAKPOINTS = (() => {
@@ -16,7 +17,8 @@ const GRID_BREAKPOINTS = (() => {
     default: MAX_COLUMNS,
   };
   for (let i = 1; i <= MAX_COLUMNS; i++)
-    breakpoints[i * (IMAGE_SIZE + 2 * IMAGE_MARGIN)] = i - 1;
+    breakpoints[i * (IMAGE_SIZE + 2 * IMAGE_MARGIN) + CONTAINER_PADDING * 2] =
+      i - 1;
   return breakpoints;
 })();
 
@@ -24,9 +26,13 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1em;
+  align-items: center;
+  padding: 0 1em;
 `;
 
 const GroupContainer = styled.div`
+  width: fit-content;
+
   > h2 {
     opacity: 0.6;
     font-weight: 300;
