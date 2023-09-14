@@ -37,6 +37,7 @@ const GroupContainer = styled.div`
     opacity: 0.6;
     font-weight: 300;
     font-size: 1.2rem;
+    padding-left: ${IMAGE_MARGIN}px;
   }
 `;
 
