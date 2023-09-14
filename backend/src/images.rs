@@ -241,7 +241,7 @@ fn extract_exif(mut buf_data: BufReader<Box<dyn ReadSeek>>) -> Result<Exif> {
 
     Ok(Exif {
         fstop: get_exif_field(&exif_meta, Tag::FNumber),
-        iso: get_exif_field(&exif_meta, Tag::ISOSpeed),
+        iso: get_exif_field(&exif_meta, Tag::PhotographicSensitivity),
         exposuretime: get_exif_field(&exif_meta, Tag::ExposureTime),
         lensmodel: get_exif_field(&exif_meta, Tag::LensModel).map(|s| s.trim_matches('"').into()),
         lensmake: get_exif_field(&exif_meta, Tag::LensMake).map(|s| s.trim_matches('"').into()),
