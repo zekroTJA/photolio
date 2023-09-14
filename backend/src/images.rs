@@ -239,6 +239,14 @@ fn extract_exif(mut buf_data: BufReader<Box<dyn ReadSeek>>) -> Result<Exif> {
             .map(|dt| chrono::DateTime::from_utc(dt, Utc))
     });
 
+    for field in exif_meta.fields() {
+        println!(
+            "{}: {:?}",
+            field.tag.description().unwrap_or_default(),
+            field
+        );
+    }
+
     Ok(Exif {
         fstop: get_exif_field(&exif_meta, Tag::FNumber),
         iso: get_exif_field(&exif_meta, Tag::PhotographicSensitivity),
