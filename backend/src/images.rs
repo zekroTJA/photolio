@@ -60,7 +60,7 @@ pub fn cache_all_images_meta(
     block: bool,
 ) -> Result<()> {
     let item_ids: Vec<String> = storage
-        .list(CONTENT_BUCKET)?
+        .list_deep(CONTENT_BUCKET)?
         .iter()
         .filter(|(id, _)| is_image(Path::new(id)))
         .map(|(id, _)| id)
@@ -127,7 +127,7 @@ pub fn cache_single_image_meta(
 /// Images with no cached metadata are not contained in the resulting list.
 pub fn list(storage: Arc<Storage>, cache: Arc<CacheDriver<Image>>) -> Result<Vec<Image>> {
     let mut res: Vec<Image> = storage
-        .list(CONTENT_BUCKET)?
+        .list_deep(CONTENT_BUCKET)?
         .iter()
         .map(|(id, group)| {
             cached_details(&cache, id).map(|d| d.map(|d| d.with_group(group.clone())))
@@ -148,14 +148,14 @@ pub fn list(storage: Arc<Storage>, cache: Arc<CacheDriver<Image>>) -> Result<Vec
 }
 
 /// Finds an image by `id` in the given [`storage`](Storage) and returns
-/// a [`ReadSeek`](ReadSeek) implementation instance.
+/// a [`ReadSeek`] implementation instance.
 pub fn data(storage: &Storage, id: &str) -> Result<Option<Box<dyn ReadSeek>>> {
-    storage.read(CONTENT_BUCKET, id)
+    storage.read_deep(CONTENT_BUCKET, id)
 }
 
 /// Finds an image by `id` in the given [`storage`](Storage) and returns
 /// a scaled down version of it by the given `width` and `height` as
-/// [`ReadSeek`](ReadSeek) implementation instance.
+/// [`ReadSeek`] implementation instance.
 ///
 /// If a thumbnail for the given `id` and `height` + `width` parameters has
 /// already been generated, the pre-generated version is returned. Otherwise,
@@ -180,9 +180,9 @@ pub fn thumbnail(
 
     let thumbnail_id = format!("{id}_{width}x{height}");
 
-    if storage.exists(THUMBNAILS_BUCKET, thumbnail_id.as_str())? {
+    if storage.exists_deep(THUMBNAILS_BUCKET, thumbnail_id.as_str())? {
         debug!("Returning thumbnail from storage for {id} ...");
-        return match storage.read(THUMBNAILS_BUCKET, thumbnail_id.as_str()) {
+        return match storage.read_deep(THUMBNAILS_BUCKET, thumbnail_id.as_str()) {
             Ok(r) => Ok(r),
             Err(e) => Err(e),
         };
@@ -190,7 +190,7 @@ pub fn thumbnail(
 
     info!("Generating thumbnail for {id} ...");
 
-    let Some(reader) = storage.read(CONTENT_BUCKET, id)? else {
+    let Some(reader) = storage.read_deep(CONTENT_BUCKET, id)? else {
         return Ok(None);
     };
 
@@ -230,6 +230,15 @@ pub fn thumbnail(
 
     buf.seek(SeekFrom::Start(0))?;
     Ok(Some(Box::new(buf)))
+}
+
+/// Returns `true` if the given path's extension matches one of the defined
+/// image file extensions.
+pub fn is_image(path: &Path) -> bool {
+    let Some(ext) = path.extension() else {
+        return false;
+    };
+    ["jpg", "jpeg", "tiff", "png", "webp", "gif"].contains(&ext.to_string_lossy().deref())
 }
 
 fn get_exif_field(exif_meta: &exif::Exif, tag: Tag) -> Option<String> {
@@ -298,7 +307,7 @@ fn extract_exif(mut buf_data: BufReader<Box<dyn ReadSeek>>) -> Result<Exif> {
 fn image_details(storage: &Storage, cache: &CacheDriver<Image>, id: &str) -> Result<Option<Image>> {
     info!("Collecting image details for {id} ...");
 
-    let Some(data) = storage.read(CONTENT_BUCKET, id)? else {
+    let Some(data) = storage.read_deep(CONTENT_BUCKET, id)? else {
         return Ok(None);
     };
 
@@ -340,7 +349,7 @@ fn image_details(storage: &Storage, cache: &CacheDriver<Image>, id: &str) -> Res
         image.to_rgba8().to_vec().as_slice(),
     );
 
-    let Some((meta, group)) = storage.meta(CONTENT_BUCKET, id)? else {
+    let Some((meta, group)) = storage.meta_deep(CONTENT_BUCKET, id)? else {
         return Ok(None);
     };
 
@@ -366,11 +375,4 @@ fn image_details(storage: &Storage, cache: &CacheDriver<Image>, id: &str) -> Res
     }
 
     Ok(Some(image))
-}
-
-pub fn is_image(p: &Path) -> bool {
-    let Some(ext) = p.extension() else {
-        return false;
-    };
-    ["jpg", "jpeg", "tiff", "png", "webp", "gif"].contains(&ext.to_string_lossy().deref())
 }

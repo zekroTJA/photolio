@@ -46,7 +46,7 @@ pub async fn watch_files(
 ) -> std::result::Result<(), Box<dyn Error>> {
     let (mut watcher, mut rx) = async_watcher()?;
 
-    let pth = storage.get_bucket_path(CONTENT_BUCKET).unwrap();
+    let pth = storage.bucket_path(CONTENT_BUCKET);
 
     info!("Watching directory {} ...", pth.to_str().unwrap());
     watcher.watch(pth.as_path(), RecursiveMode::Recursive)?;

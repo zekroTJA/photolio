@@ -5,34 +5,51 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Combined trait of [`Read`](Read) and [`Seek`](Seek).
 pub trait ReadSeek: Read + Seek {}
 
 impl ReadSeek for File {}
 impl ReadSeek for Cursor<std::vec::Vec<u8>> {}
 
+/// Local data storage implementation to store, list and
+/// retrieve image data.
+///
+/// The storage is partitioned in "buckets" wich are simply
+/// represented by folders in the file system under the
+/// specified root directory.
 pub struct Storage {
-    root_dir: String,
+    root_dir: PathBuf,
 }
 
 impl Storage {
-    pub fn new(root_dir: &str) -> Self {
+    /// Creates a new instance of [`Storage`] with
+    /// the given root directory.
+    pub fn new(root_dir: impl Into<PathBuf>) -> Self {
         Storage {
             root_dir: root_dir.into(),
         }
     }
 
+    /// Creates a bucket if not already existent.
     pub fn create_bucket_if_not_exists(&self, bucket: &str) -> Result<()> {
         fs::create_dir_all(self.bucket_path(bucket))?;
         Ok(())
     }
 
-    pub fn store(&self, bucket: &str, name: &str, content: &mut dyn Read) -> Result<()> {
-        let mut file = fs::File::create(self.bucket_path(bucket).join(name))?;
-        copy(content, &mut file)?;
+    /// Stores the contents from the passed [`reader`](Read) and stores it under
+    /// the given `path` in the specified `bucket`.
+    pub fn store(&self, bucket: &str, path: &str, reader: &mut dyn Read) -> Result<()> {
+        let mut file = fs::File::create(self.bucket_path(bucket).join(path))?;
+        copy(reader, &mut file)?;
         Ok(())
     }
 
-    pub fn read(&self, bucket: &str, name: &str) -> Result<Option<Box<dyn ReadSeek>>> {
+    /// Searches a file in the given `bucket` by the given `name` in the buckets
+    /// root directory and first level of sub directories and returns the file
+    /// handle as [`ReadSeek`] implementation instance reference.
+    ///
+    /// If the file was not found, `None` is returned.
+    pub fn read_deep(&self, bucket: &str, name: &str) -> Result<Option<Box<dyn ReadSeek>>> {
         let obj = self.get_object_deep(bucket, name)?;
         match obj {
             Some((f, _)) => Ok(Some(Box::new(f))),
@@ -40,7 +57,16 @@ impl Storage {
         }
     }
 
-    pub fn meta(&self, bucket: &str, name: &str) -> Result<Option<(Metadata, Option<String>)>> {
+    /// Searches a file in the given `bucket` by the given `name` in the buckets
+    /// root directory and first level of sub directories and returns it's metadata
+    /// and possible sub directory.
+    ///
+    /// If the file was not found, `None` is returned.
+    pub fn meta_deep(
+        &self,
+        bucket: &str,
+        name: &str,
+    ) -> Result<Option<(Metadata, Option<String>)>> {
         let file = self.get_object_deep(bucket, name)?;
         let meta = file
             .map(|(f, dir)| f.metadata().map(|meta| (meta, dir)))
@@ -48,7 +74,10 @@ impl Storage {
         Ok(meta)
     }
 
-    pub fn exists(&self, bucket: &str, name: &str) -> Result<bool> {
+    /// Searches a file in the given `bucket` by the given `name` in the buckets
+    /// root directory and first level of sub directories and returns true if the
+    /// file was found.
+    pub fn exists_deep(&self, bucket: &str, name: &str) -> Result<bool> {
         if self.bucket_path(bucket).join(name).exists() {
             return Ok(true);
         }
@@ -62,7 +91,9 @@ impl Storage {
         Ok(false)
     }
 
-    pub fn list(&self, bucket: &str) -> Result<Vec<(String, Option<String>)>> {
+    /// Returns a list ob object names in the given `bucket` and their possible
+    /// first level sub directories.
+    pub fn list_deep(&self, bucket: &str) -> Result<Vec<(String, Option<String>)>> {
         let entries = fs::read_dir(self.bucket_path(bucket))?;
 
         let mut res = vec![];
@@ -88,11 +119,8 @@ impl Storage {
         Ok(res)
     }
 
-    pub fn get_bucket_path(&self, bucket: &str) -> Option<PathBuf> {
-        Some(self.bucket_path(bucket))
-    }
-
-    fn bucket_path(&self, bucket: &str) -> PathBuf {
+    /// Returns the local file system path to the given `bucket`.
+    pub fn bucket_path(&self, bucket: &str) -> PathBuf {
         Path::new(&self.root_dir).join(bucket)
     }
 
