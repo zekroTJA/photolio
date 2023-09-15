@@ -3,7 +3,6 @@ use crate::{
     errors::StatusError,
     models::{BlurHash, Dimensions, Exif, Image},
     storage::{ReadSeek, Storage},
-    tenary,
 };
 use actix_web::http::StatusCode;
 use anyhow::Result;
@@ -209,8 +208,18 @@ pub fn thumbnail(
     let image = image_reader.decode()?;
 
     let (original_width, original_height) = image.dimensions();
-    let width = tenary!(width > original_width => original_width; width);
-    let height = tenary!(height > original_height => original_height; height);
+
+    let width = if width > original_width {
+        original_width
+    } else {
+        width
+    };
+
+    let height = if height > original_height {
+        original_height
+    } else {
+        height
+    };
 
     image
         .thumbnail(width, height)

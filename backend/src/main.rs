@@ -7,9 +7,6 @@ mod storage;
 mod watcher;
 mod ws;
 
-#[macro_use]
-mod macros;
-
 use actix_web::rt::spawn;
 use argparse::{ArgumentParser, Store, StoreTrue};
 use config::{Config, Environment, File, FileFormat};
