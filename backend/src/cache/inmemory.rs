@@ -9,7 +9,7 @@ use std::{
     sync::RwLock,
 };
 
-/// [Cache](Cache) implementation for in-memory storage.
+/// [`Cache`](Cache) implementation for in-memory storage.
 ///
 /// When enabled, this implementation can also store and load entries
 /// in a JSON file on local disk.
@@ -22,7 +22,7 @@ impl<T> InMemory<T>
 where
     T: Clone + DeserializeOwned + Serialize,
 {
-    /// Creates a new instance of [InMemory](InMemory) with no persistent storage.
+    /// Creates a new instance of [`InMemory`](InMemory) with no persistent storage.
     pub fn new_volatile() -> Self {
         InMemory {
             map: HashMap::new().into(),
@@ -30,7 +30,7 @@ where
         }
     }
 
-    /// Creates a new instance of [InMemory](InMemory) with persistent storage to
+    /// Creates a new instance of [`InMemory`](InMemory) with persistent storage to
     /// the given `file_name` location. If the file does not exist, it will be
     /// created.
     pub fn new_persistent(file_name: &str) -> io::Result<Self> {

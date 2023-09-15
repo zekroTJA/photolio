@@ -32,7 +32,9 @@ fn handle_event(storage: Arc<Storage>, cache: Arc<CacheDriver<Image>>, event: Ev
         .filter_map(|p| p.file_name())
         .map(|p| p.to_string_lossy().to_string())
     {
-        if let Err(err) = images::cache_single_image(storage.clone(), cache.clone(), id.clone()) {
+        if let Err(err) =
+            images::cache_single_image_meta(storage.clone(), cache.clone(), id.clone())
+        {
             error!("Gathering image data for {} failed: {}", id, err);
         }
     }

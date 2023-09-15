@@ -12,7 +12,7 @@ pub struct Redis {
 impl Redis {
     const KEY_PREFIX: &'static str = "PHCACHE:";
 
-    /// Create a new instance of [Redis](Redis) with the given Redis
+    /// Create a new instance of [`Redis`](Redis) with the given Redis
     /// address and connect to it.
     ///
     /// # Example

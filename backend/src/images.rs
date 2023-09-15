@@ -23,24 +23,39 @@ use threadpool::ThreadPool;
 pub const CONTENT_BUCKET: &str = "content";
 pub const THUMBNAILS_BUCKET: &str = "thumbnails";
 
-static POOL: OnceCell<Mutex<ThreadPool>> = OnceCell::new();
+/// Singleton thread pool used to perform concurrent work
+/// like generating blurhashes for images.
+static THREAD_POOL: OnceCell<Mutex<ThreadPool>> = OnceCell::new();
 
-pub fn get_pool() -> &'static Mutex<threadpool::ThreadPool> {
-    POOL.get_or_init(|| Mutex::new(ThreadPool::new(num_cpus::get())))
+/// Returns an initialized instance of the singleton thread pool.
+fn thread_pool() -> &'static Mutex<threadpool::ThreadPool> {
+    THREAD_POOL.get_or_init(|| Mutex::new(ThreadPool::new(num_cpus::get())))
 }
 
+/// Create storage buckets if not already existent.
 pub fn prepare(storage: &Storage) -> Result<()> {
     storage.create_bucket_if_not_exists(CONTENT_BUCKET)?;
     storage.create_bucket_if_not_exists(THUMBNAILS_BUCKET)?;
     Ok(())
 }
 
+/// Retrieve [`Image`](Image) metadata by the given image `id` from the given
+/// [`cache`](CacheDriver) instance.
 pub fn cached_details(cache: &CacheDriver<Image>, id: &str) -> Result<Option<Image>> {
     let v = cache.get(format!("imgmeta-{id}").as_str())?;
     Ok(v)
 }
 
-pub fn cache_all_images(
+/// Collects a list of all images from [`storage`](Storage) and, extracts
+/// metadata and generates blurhashes for each image using the thread pool and
+/// stores the results to the [`cache`](CacheDriver).
+///
+/// If `block` is passed as `true`, the function will block the current therad
+/// until all images have been processed. If an error occurs, it is passed in
+/// the returned result. Otherwise, if `block` is passed as `false`, the
+/// processing will be performed in the background and errors will be reported
+/// to the log output.
+pub fn cache_all_images_meta(
     storage: Arc<Storage>,
     cache: Arc<CacheDriver<Image>>,
     block: bool,
@@ -53,7 +68,7 @@ pub fn cache_all_images(
         .cloned()
         .collect();
 
-    let pool = get_pool()
+    let pool = thread_pool()
         .lock()
         .map_err(|_| anyhow::anyhow!("locking thread poool failed"))?;
     let (tx, rx) = channel();
@@ -85,12 +100,15 @@ pub fn cache_all_images(
     Ok(())
 }
 
-pub fn cache_single_image(
+/// Takes a single image from [`storage`](Storage) by `id` and, if found, extracts
+/// metadata and generates a blurhash for the image which are then stored to the
+/// [`cache`](CacheDriver). The process is executed asynchroneously in the tread pool.
+pub fn cache_single_image_meta(
     storage: Arc<Storage>,
     cache: Arc<CacheDriver<Image>>,
     id: String,
 ) -> Result<()> {
-    let pool = get_pool()
+    let pool = thread_pool()
         .lock()
         .map_err(|_| anyhow::anyhow!("locking on threadpool failed"))?;
 
@@ -104,6 +122,10 @@ pub fn cache_single_image(
     Ok(())
 }
 
+/// Lists all images from [`storage`](Storage) and tries to find cached metadata
+/// in the [`cache`](CacheDriver) and returns a list of images with their metadata.
+///
+/// Images with no cached metadata are not contained in the resulting list.
 pub fn list(storage: Arc<Storage>, cache: Arc<CacheDriver<Image>>) -> Result<Vec<Image>> {
     let mut res: Vec<Image> = storage
         .list(CONTENT_BUCKET)?
@@ -126,10 +148,23 @@ pub fn list(storage: Arc<Storage>, cache: Arc<CacheDriver<Image>>) -> Result<Vec
     Ok(res)
 }
 
+/// Finds an image by `id` in the given [`storage`](Storage) and returns
+/// a [`ReadSeek`](ReadSeek) implementation instance.
 pub fn data(storage: &Storage, id: &str) -> Result<Option<Box<dyn ReadSeek>>> {
     storage.read(CONTENT_BUCKET, id)
 }
 
+/// Finds an image by `id` in the given [`storage`](Storage) and returns
+/// a scaled down version of it by the given `width` and `height` as
+/// [`ReadSeek`](ReadSeek) implementation instance.
+///
+/// If a thumbnail for the given `id` and `height` + `width` parameters has
+/// already been generated, the pre-generated version is returned. Otherwise,
+/// the thumbnail is generated and stored to the [`storage`](Storage).
+///
+/// At least one of the both parameters `width` and `height` must be larger
+/// than `0`. If both values are given, the smallest side is used for
+/// downscaling to preserve aspect ratio.
 pub fn thumbnail(
     storage: &Storage,
     id: &str,
