@@ -2,6 +2,24 @@
 
 A self-hosted light weight web gallery to show my photography work on my web page.
 
+This service is **not** a CMS. By passing a storage location via the config, it is used to list and dispaly images in this storage location as well as generating and serving thumbnails and metadata of the images.
+
+In the defines storage location, two directories are creates. `content` and `thumbnails`. The `thumbnails` directory contains pre-generated thumbnails of the images. The `content` directory contains the images. You can put your images in sub-directories to visually group them together in the frontend.
+
+Example:
+```
+content/
+    Crete 2023/
+        DSC07476.png
+        DSC07477.png
+        DSC07478.png
+    Prague 2021/
+        DSC06231.png
+        DSC06232.png
+    DSC04176.png
+    DSC04177.png
+```
+
 ## Demo
 
 [**Here**](https://gallery.zekro.de) you can find the deployment of my gallery.
