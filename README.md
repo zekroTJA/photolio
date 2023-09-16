@@ -24,7 +24,7 @@ content/
 
 [**Here**](https://gallery.zekro.de) you can find the deployment of my gallery.
 
-https://github-production-user-asset-6210df.s3.amazonaws.com/16734205/268050531-e1ce2f5c-4ee2-42ec-9c56-4ebec699d0d4.mp4
+https://github.com/zekroTJA/photolio/assets/16734205/650463d0-3052-4333-a68f-1c9e3f1e7686
 
 ## Setup
 
