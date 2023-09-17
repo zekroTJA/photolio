@@ -10,8 +10,8 @@ pub struct AddCache<'a> {
     val: &'a str,
 }
 
-impl<'a> AddCache<'a> {
-    pub fn default() -> Self {
+impl<'a> Default for AddCache<'a> {
+    fn default() -> Self {
         AddCache {
             val: "public, max-age=604800, immutable",
         }
@@ -19,15 +19,15 @@ impl<'a> AddCache<'a> {
 }
 
 impl<'a, S, B> Transform<S, ServiceRequest> for AddCache<'a>
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
-    S::Future: 'static,
-    B: 'static,
+    where
+        S: Service<ServiceRequest, Response=ServiceResponse<B>, Error=Error>,
+        S::Future: 'static,
+        B: 'static,
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
-    type InitError = ();
     type Transform = AddCacheMiddleware<'a, S>;
+    type InitError = ();
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
@@ -44,10 +44,10 @@ pub struct AddCacheMiddleware<'a, S> {
 }
 
 impl<'a, S, B> Service<ServiceRequest> for AddCacheMiddleware<'a, S>
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
-    S::Future: 'static,
-    B: 'static,
+    where
+        S: Service<ServiceRequest, Response=ServiceResponse<B>, Error=Error>,
+        S::Future: 'static,
+        B: 'static,
 {
     type Response = ServiceResponse<B>;
     type Error = Error;

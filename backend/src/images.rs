@@ -27,7 +27,7 @@ pub const THUMBNAILS_BUCKET: &str = "thumbnails";
 static THREAD_POOL: OnceCell<Mutex<ThreadPool>> = OnceCell::new();
 
 /// Returns an initialized instance of the singleton thread pool.
-fn thread_pool() -> &'static Mutex<threadpool::ThreadPool> {
+fn thread_pool() -> &'static Mutex<ThreadPool> {
     THREAD_POOL.get_or_init(|| Mutex::new(ThreadPool::new(num_cpus::get())))
 }
 
@@ -175,7 +175,7 @@ pub fn thumbnail(
             "with and height can not be both 0".into(),
             StatusCode::BAD_REQUEST,
         )
-        .into());
+            .into());
     }
 
     let thumbnail_id = format!("{id}_{width}x{height}");
@@ -251,8 +251,8 @@ fn image_reader<'a, R>(
     buf_data: &'a mut BufReader<R>,
     id: &str,
 ) -> Result<image::io::Reader<&'a mut BufReader<R>>>
-where
-    R: Read + Seek,
+    where
+        R: Read + Seek,
 {
     let image_format =
         image::ImageFormat::from_extension(Path::new(id).extension().unwrap_or_default());
@@ -286,11 +286,11 @@ fn extract_exif(mut buf_data: BufReader<Box<dyn ReadSeek>>) -> Result<Exif> {
         },
         _ => None,
     }
-    .and_then(|v| {
-        NaiveDate::from_ymd_opt(v.year.into(), v.month.into(), v.day.into())
-            .and_then(|dt| dt.and_hms_opt(v.hour.into(), v.minute.into(), v.second.into()))
-            .map(|dt| chrono::DateTime::from_utc(dt, Utc))
-    });
+        .and_then(|v| {
+            NaiveDate::from_ymd_opt(v.year.into(), v.month.into(), v.day.into())
+                .and_then(|dt| dt.and_hms_opt(v.hour.into(), v.minute.into(), v.second.into()))
+                .map(|dt| chrono::DateTime::from_utc(dt, Utc))
+        });
 
     Ok(Exif {
         fstop: get_exif_field(&exif_meta, Tag::FNumber),
@@ -317,21 +317,21 @@ fn image_details(storage: &Storage, cache: &CacheDriver<Image>, id: &str) -> Res
 
     debug!("{{{id}}} Decoding image ...");
     let image = image_reader.decode()?;
-    buf_data.seek(std::io::SeekFrom::Start(0))?;
+    buf_data.seek(SeekFrom::Start(0))?;
 
     debug!("{{{id}}} Reading exif metadata ...");
     let ex = match extract_exif(buf_data) {
         Ok(r) => Ok(Some(r)),
         Err(err)
-            if err.is::<exif::Error>()
-                && matches!(
+        if err.is::<exif::Error>()
+            && matches!(
                     err.downcast_ref::<exif::Error>().unwrap(),
                     exif::Error::NotFound(_)
                 ) =>
-        {
-            warn!("No exif data found for image {id}");
-            Ok(None)
-        }
+            {
+                warn!("No exif data found for image {id}");
+                Ok(None)
+            }
         Err(e) => Err(e),
     }?;
 

@@ -18,7 +18,7 @@ use std::{io, sync::Arc};
 use crate::storage::Storage;
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> io::Result<()> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info"))
         .try_init()
         .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;

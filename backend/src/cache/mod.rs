@@ -14,32 +14,32 @@ pub enum CacheDriver<T> {
 }
 
 impl<T> CacheDriver<T>
-where
-    T: Clone + Serialize + DeserializeOwned,
+    where
+        T: Clone + Serialize + DeserializeOwned,
 {
     pub fn new(cfg: &CacheConfig) -> Result<Self> {
         match cfg {
             CacheConfig::InMemory { cachelocation } => {
                 if let Some(cachelocation) = cachelocation {
-                    let d = inmemory::InMemory::<T>::new_persistent(cachelocation)
+                    let d = InMemory::<T>::new_persistent(cachelocation)
                         .map(|d| CacheDriver::InMemory(d))?;
                     Ok(d)
                 } else {
                     Ok(CacheDriver::InMemory(
-                        inmemory::InMemory::<T>::new_volatile(),
+                        InMemory::<T>::new_volatile(),
                     ))
                 }
             }
             CacheConfig::Redis { redisaddress } => {
-                redis::Redis::new(redisaddress).map(|d| CacheDriver::Redis(d))
+                Redis::new(redisaddress).map(|d| CacheDriver::Redis(d))
             }
         }
     }
 }
 
 impl<T> Deref for CacheDriver<T>
-where
-    T: Clone + Serialize + DeserializeOwned + 'static,
+    where
+        T: Clone + Serialize + DeserializeOwned + 'static,
 {
     type Target = dyn Cache<T>;
 

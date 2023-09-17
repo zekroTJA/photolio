@@ -9,7 +9,8 @@ use std::{
 pub trait ReadSeek: Read + Seek {}
 
 impl ReadSeek for File {}
-impl ReadSeek for Cursor<std::vec::Vec<u8>> {}
+
+impl ReadSeek for Cursor<Vec<u8>> {}
 
 /// Local data storage implementation to store, list and
 /// retrieve image data.
@@ -39,7 +40,7 @@ impl Storage {
     /// Stores the contents from the passed [`reader`](Read) and stores it under
     /// the given `path` in the specified `bucket`.
     pub fn store(&self, bucket: &str, path: &str, reader: &mut dyn Read) -> Result<()> {
-        let mut file = fs::File::create(self.bucket_path(bucket).join(path))?;
+        let mut file = File::create(self.bucket_path(bucket).join(path))?;
         copy(reader, &mut file)?;
         Ok(())
     }
@@ -139,8 +140,8 @@ impl Storage {
         Ok(res?)
     }
 
-    fn get_object(&self, bucket: &str, dir: impl AsRef<Path>) -> Result<Option<fs::File>> {
-        match fs::File::open(self.bucket_path(bucket).join(dir)) {
+    fn get_object(&self, bucket: &str, dir: impl AsRef<Path>) -> Result<Option<File>> {
+        match File::open(self.bucket_path(bucket).join(dir)) {
             Ok(file) => Ok(Some(file)),
             Err(err) if matches!(err.kind(), ErrorKind::NotFound) => Ok(None),
             Err(err) => Err(err.into()),
@@ -151,7 +152,7 @@ impl Storage {
         &self,
         bucket: &str,
         name: &str,
-    ) -> Result<Option<(fs::File, Option<String>)>> {
+    ) -> Result<Option<(File, Option<String>)>> {
         match self.get_object(bucket, name)? {
             Some(file) => Ok(Some((file, None))),
             None => {
