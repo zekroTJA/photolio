@@ -15,7 +15,7 @@ use crate::{
     models::Image,
     storage::Storage,
 };
-use crate::ws::controllers::images;
+use crate::ws::controllers::{admin, images};
 
 /// Initializes and starts the web server on the given `address` with the
 /// passed `storage` and `cache` instances.
@@ -41,25 +41,16 @@ pub async fn run(
         }
 
         App::new()
-            // .route("/images", web::get().to(get_meta_list))
-            // .route(
-            //     "/images/{id}",
-            //     web::get().to(get_image).wrap(AddCache::default()),
-            // )
-            // .route("/images/{id}/meta", web::get().to(get_meta))
-            // .route(
-            //     "/images/{id}/thumbnail",
-            //     web::get().to(get_image_thumbnail).wrap(AddCache::default()),
-            // )
             .service(web::scope("/images").configure(images::configure))
+            .service(web::scope("/admin").configure(admin::configure))
             .wrap(Logger::default())
             .wrap(cors)
             .app_data(Data::from(cache.clone()))
             .app_data(Data::from(storage.clone()))
     })
-    .bind(address)?
-    .run()
-    .await
+        .bind(address)?
+        .run()
+        .await
 }
 
 
