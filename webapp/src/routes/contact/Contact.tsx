@@ -4,6 +4,7 @@ import {
   LinkMail,
   LinkTwitter,
 } from 'components/ContactLinks';
+
 import { Embed } from 'components/Embed';
 import { IconsList } from 'components/IconsList';
 import { PaddingContainer } from 'components/PaddingContainer';
@@ -28,7 +29,7 @@ const ContactMe = () => (
     </p>
     <p>
       Alternatively, you can also join my Discord and DM me there. My Discord
-      Tag is <Embed>zekro#0001</Embed>.
+      username is <Embed>zekrotja</Embed>.
     </p>
     <IconsList>
       <LinkTwitter />
