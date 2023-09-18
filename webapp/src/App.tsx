@@ -1,16 +1,17 @@
-import { Footer } from 'components/Footer';
-import { Header } from 'components/Header';
-import { PageContainer } from 'components/PageContainer';
-import { ThemeSwitch } from 'components/ThemeSwitch';
-import { UpdateThemeProvider } from 'components/ThemeUpdateProvider';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
+import { DefaultTheme, createGlobalStyle } from 'styled-components';
+import { Route, BrowserRouter as Router } from 'react-router-dom';
+
 import { AboutRoute } from 'routes/about/About';
 import { ContactRoute } from 'routes/contact/Contact';
+import { Footer } from 'components/Footer';
+import { Header } from 'components/Header';
+import { HomeRoute } from 'routes/home/Home';
 import { ImageRoute } from 'routes/image/Image';
 import { LocalStorageService } from 'services/LocalStorageService';
-import { createGlobalStyle, DefaultTheme } from 'styled-components';
+import { PageContainer } from 'components/PageContainer';
+import { ThemeSwitch } from 'components/ThemeSwitch';
 import { Theming } from 'util/Theming';
-import { HomeRoute } from 'routes/home/Home';
+import { UpdateThemeProvider } from 'components/ThemeUpdateProvider';
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -61,3 +62,4 @@ function App() {
 }
 
 export default App;
+

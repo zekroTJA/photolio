@@ -1,5 +1,5 @@
-import { createContext, useState } from 'react';
 import { DefaultTheme, ThemeProvider } from 'styled-components';
+import { createContext, useState } from 'react';
 
 export const ThemeUpdateContext = createContext((theme: DefaultTheme) =>
   console.error(
@@ -7,10 +7,9 @@ export const ThemeUpdateContext = createContext((theme: DefaultTheme) =>
   )
 );
 
-export const UpdateThemeProvider: React.FC<{ theme: DefaultTheme }> = ({
-  children,
-  theme,
-}) => {
+export const UpdateThemeProvider: React.FC<
+  { theme: DefaultTheme } & React.PropsWithChildren
+> = ({ children, theme }) => {
   const [myTheme, setMyTheme] = useState(theme);
 
   return (
@@ -21,3 +20,4 @@ export const UpdateThemeProvider: React.FC<{ theme: DefaultTheme }> = ({
     </ThemeProvider>
   );
 };
+

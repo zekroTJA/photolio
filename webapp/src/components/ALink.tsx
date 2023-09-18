@@ -1,9 +1,9 @@
 import React from 'react';
 
-interface Props {
+type Props = React.PropsWithChildren & {
   href: string;
   self?: boolean;
-}
+};
 
 export const ALink: React.FC<Props> = ({ children, href, self }) => (
   <a
@@ -15,3 +15,4 @@ export const ALink: React.FC<Props> = ({ children, href, self }) => (
     {children}
   </a>
 );
+

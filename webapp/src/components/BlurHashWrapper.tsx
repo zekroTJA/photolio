@@ -17,9 +17,12 @@ interface Events {
   onClick?: (id: string) => void;
 }
 
-interface Props extends ImageProps, OptDimensions, Events {
-  image: ImageModel;
-}
+type Props = ImageProps &
+  OptDimensions &
+  Events &
+  React.PropsWithChildren & {
+    image: ImageModel;
+  };
 
 interface ContainerProps {
   state: string;

@@ -1,10 +1,11 @@
-import { useContext } from 'react';
-import { LocalStorageService } from 'services/LocalStorageService';
-import styled, { ThemeContext } from 'styled-components';
-import { ThemeUpdateContext } from './ThemeUpdateProvider';
-import { ReactComponent as IconLight } from 'assets/light.svg';
-import { ReactComponent as IconDark } from 'assets/dark.svg';
 import { Transition, TransitionStatus } from 'react-transition-group';
+import styled, { ThemeContext } from 'styled-components';
+
+import { ReactComponent as IconDark } from 'assets/dark.svg';
+import { ReactComponent as IconLight } from 'assets/light.svg';
+import { LocalStorageService } from 'services/LocalStorageService';
+import { ThemeUpdateContext } from './ThemeUpdateProvider';
+import { useContext } from 'react';
 
 const Container = styled.div`
   position: fixed;
@@ -38,21 +39,21 @@ export const ThemeSwitch: React.FC = () => {
   const updateTheme = useContext(ThemeUpdateContext);
 
   const setTheme = () => {
-    const dark = !currentTheme.dark;
+    const dark = !currentTheme!.dark;
     updateTheme({ ...currentTheme, dark });
     LocalStorageService.set('themeOverride', dark);
   };
 
   return (
     <Container onClick={() => setTheme()}>
-      <Transition in={currentTheme.dark} timeout={200}>
+      <Transition in={currentTheme!.dark} timeout={200}>
         {(state) => (
           <Icon state={state}>
             <IconLight />
           </Icon>
         )}
       </Transition>
-      <Transition in={!currentTheme.dark} timeout={200}>
+      <Transition in={!currentTheme!.dark} timeout={200}>
         {(state) => (
           <Icon state={state}>
             <IconDark />

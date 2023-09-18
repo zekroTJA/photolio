@@ -1,4 +1,4 @@
-skipprecache = true
+skipprecache = false
 adminkey = "admin-test-key"
 
 [storage]
