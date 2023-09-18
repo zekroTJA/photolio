@@ -1,21 +1,18 @@
-use std::{
-    net,
-    sync::Arc,
-};
+use std::{net, sync::Arc};
 
 use actix_cors::Cors;
 use actix_web::{
-    App,
-    HttpServer,
-    middleware::Logger, web::{self, Data},
+    middleware::Logger,
+    web::{self, Data},
+    App, HttpServer,
 };
 
-use crate::{
-    cache::CacheDriver,
-    models::Image,
-    storage::Storage,
-};
 use crate::ws::controllers::{admin, images};
+use crate::{cache::CacheDriver, models::Image, storage::Storage};
+
+pub struct Config {
+    pub adminkey: Option<String>,
+}
 
 /// Initializes and starts the web server on the given `address` with the
 /// passed `storage` and `cache` instances.
@@ -24,6 +21,7 @@ use crate::ws::controllers::{admin, images};
 /// header value. Otherwise, the value of the header will be a wildcard (`*`).
 pub async fn run(
     address: impl net::ToSocketAddrs,
+    adminkey: Option<String>,
     origin: Option<String>,
     storage: Arc<Storage>,
     cache: Arc<CacheDriver<Image>>,
@@ -40,6 +38,10 @@ pub async fn run(
             cors = cors.send_wildcard();
         }
 
+        let cfg = Config {
+            adminkey: adminkey.clone(),
+        };
+
         App::new()
             .service(web::scope("/images").configure(images::configure))
             .service(web::scope("/admin").configure(admin::configure))
@@ -47,10 +49,9 @@ pub async fn run(
             .wrap(cors)
             .app_data(Data::from(cache.clone()))
             .app_data(Data::from(storage.clone()))
+            .app_data(Data::new(cfg))
     })
-        .bind(address)?
-        .run()
-        .await
+    .bind(address)?
+    .run()
+    .await
 }
-
-

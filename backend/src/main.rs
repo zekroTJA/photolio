@@ -93,5 +93,5 @@ async fn main() -> io::Result<()> {
     let ws_port = ws_conf.port.unwrap_or(80);
 
     info!("Starting web server on {ws_addr}:{ws_port} ...");
-    ws::server::run((ws_addr.as_str(), ws_port), ws_conf.allowedorigin, s, c).await
+    ws::server::run((ws_addr.as_str(), ws_port), cfg.adminkey, ws_conf.allowedorigin, s, c).await
 }

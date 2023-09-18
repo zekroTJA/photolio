@@ -1,4 +1,5 @@
-skipprecache = false
+skipprecache = true
+adminkey = "admin-test-key"
 
 [storage]
 location = "data"
