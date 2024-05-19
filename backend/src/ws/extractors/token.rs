@@ -1,8 +1,9 @@
-use actix_web::{Error, FromRequest, HttpRequest};
 use actix_web::dev::Payload;
 use actix_web::error::{ErrorInternalServerError, ErrorUnauthorized};
+use actix_web::{Error, FromRequest, HttpRequest};
 use futures_util::future::{err, ok, Ready};
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum Token {
     Basic(String),
@@ -33,7 +34,7 @@ impl FromRequest for Token {
         ok(match prefix.as_str() {
             "basic" => Self::Basic(value.to_string()),
             "bearer" => Self::Bearer(value.to_string()),
-            _ => Self::Unspecified((prefix, value.to_string()))
+            _ => Self::Unspecified((prefix, value.to_string())),
         })
     }
 }

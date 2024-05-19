@@ -8,7 +8,7 @@ use actix_web::http::StatusCode;
 use anyhow::Result;
 use chrono::{NaiveDate, Utc};
 use exif::{In, Tag, Value};
-use image::{GenericImageView, ImageOutputFormat};
+use image::{GenericImageView, ImageFormat};
 use log::{debug, error, info, warn};
 use once_cell::sync::OnceCell;
 use std::{
@@ -175,7 +175,7 @@ pub fn thumbnail(
             "with and height can not be both 0".into(),
             StatusCode::BAD_REQUEST,
         )
-            .into());
+        .into());
     }
 
     let thumbnail_id = format!("{id}_{width}x{height}");
@@ -223,7 +223,7 @@ pub fn thumbnail(
 
     image
         .thumbnail(width, height)
-        .write_to(&mut buf, ImageOutputFormat::Jpeg(80))?;
+        .write_to(&mut buf, ImageFormat::Jpeg)?;
 
     buf.seek(SeekFrom::Start(0))?;
     storage.store(THUMBNAILS_BUCKET, thumbnail_id.as_str(), &mut buf)?;
@@ -251,8 +251,8 @@ fn image_reader<'a, R>(
     buf_data: &'a mut BufReader<R>,
     id: &str,
 ) -> Result<image::io::Reader<&'a mut BufReader<R>>>
-    where
-        R: Read + Seek,
+where
+    R: Read + Seek,
 {
     let image_format =
         image::ImageFormat::from_extension(Path::new(id).extension().unwrap_or_default());
@@ -286,11 +286,11 @@ fn extract_exif(mut buf_data: BufReader<Box<dyn ReadSeek>>) -> Result<Exif> {
         },
         _ => None,
     }
-        .and_then(|v| {
-            NaiveDate::from_ymd_opt(v.year.into(), v.month.into(), v.day.into())
-                .and_then(|dt| dt.and_hms_opt(v.hour.into(), v.minute.into(), v.second.into()))
-                .map(|dt| chrono::DateTime::from_utc(dt, Utc))
-        });
+    .and_then(|v| {
+        NaiveDate::from_ymd_opt(v.year.into(), v.month.into(), v.day.into())
+            .and_then(|dt| dt.and_hms_opt(v.hour.into(), v.minute.into(), v.second.into()))
+            .map(|dt| chrono::DateTime::from_naive_utc_and_offset(dt, Utc))
+    });
 
     Ok(Exif {
         fstop: get_exif_field(&exif_meta, Tag::FNumber),
@@ -323,15 +323,15 @@ fn image_details(storage: &Storage, cache: &CacheDriver<Image>, id: &str) -> Res
     let ex = match extract_exif(buf_data) {
         Ok(r) => Ok(Some(r)),
         Err(err)
-        if err.is::<exif::Error>()
-            && matches!(
+            if err.is::<exif::Error>()
+                && matches!(
                     err.downcast_ref::<exif::Error>().unwrap(),
                     exif::Error::NotFound(_)
                 ) =>
-            {
-                warn!("No exif data found for image {id}");
-                Ok(None)
-            }
+        {
+            warn!("No exif data found for image {id}");
+            Ok(None)
+        }
         Err(e) => Err(e),
     }?;
 
@@ -347,7 +347,7 @@ fn image_details(storage: &Storage, cache: &CacheDriver<Image>, id: &str) -> Res
         image.width(),
         image.height(),
         image.to_rgba8().to_vec().as_slice(),
-    );
+    )?;
 
     let Some((meta, group)) = storage.meta_deep(CONTENT_BUCKET, id)? else {
         return Ok(None);
