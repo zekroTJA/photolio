@@ -1,0 +1,27 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  deps-web:
+    dir: ./webapp
+    sources:
+      - ./package.json
+      - ./package-lock.json
+    cmd: npm install
+
+  run-backend:
+    aliases:
+      - run
+      - backend
+      - b
+    cmd: cargo run
+
+  run-web:
+    aliases:
+      - web
+      - w
+    deps:
+      - deps-web
+    dir: ./webapp
+    cmd: npm start
