@@ -3,26 +3,27 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^11.2.7",
-    "@testing-library/user-event": "^12.8.3",
-    "@types/react": "^18.2.22",
-    "@types/react-dom": "^18.2.7",
-    "@types/react-router-dom": "^5.3.3",
-    "@types/react-transition-group": "^4.4.6",
-    "@types/styled-components": "^5.1.27",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@testing-library/jest-dom": "^6.4",
+    "@testing-library/react": "^15.0",
+    "@testing-library/user-event": "^14.5",
+    "@types/react": "^18.3",
+    "@types/react-dom": "^18.3",
+    "@types/react-router-dom": "^5.3",
+    "@types/react-transition-group": "^4.4",
+    "@types/styled-components": "^5.1",
     "blurhash": "^2.0.5",
-    "date-fns": "^2.30.0",
-    "react": "^18.2.0",
+    "date-fns": "^3.6",
+    "react": "^18.3",
     "react-blurhash": "^0.3.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^18.3",
     "react-masonry-css": "^1.0.16",
-    "react-router": "^5",
-    "react-router-dom": "^5",
+    "react-router": "^6",
+    "react-router-dom": "^6",
     "react-scripts": "^5.0.1",
     "react-transition-group": "^4.4.5",
-    "sass": "^1.67.0",
-    "styled-components": "^6.0.8",
+    "sass": "^1.77",
+    "styled-components": "^6.1",
     "web-vitals": "^1.1.2"
   },
   "scripts": {
@@ -50,7 +51,8 @@
     ]
   },
   "devDependencies": {
-    "typescript": "^4.9.5",
+    "@types/jest": "^29.5.12",
+    "typescript": "^4",
     "typescript-styled-plugin": "^0.18.3"
   }
 }

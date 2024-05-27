@@ -5,7 +5,7 @@ import { ImageModel } from 'models/ImageModel';
 import ImageService from 'services/ImageService';
 import Masonry from 'react-masonry-css';
 import styled from 'styled-components';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 
 const IMAGE_SIZE = 250;
 const IMAGE_MARGIN = 5;
@@ -83,7 +83,7 @@ const groupImages = (images: ImageModel[]) => {
 
 export const HomeRoute: React.FC = () => {
   const [images, setImages] = useState<ImageGroups>();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     ImageService.list().then((images) => setImages(groupImages(images)));
@@ -99,7 +99,7 @@ export const HomeRoute: React.FC = () => {
             image={img}
             width={IMAGE_SIZE}
             imageURL={ImageService.getThumbnailSource(img.id, IMAGE_SIZE)}
-            onClick={(id) => history.push(`/images/${id}`)}
+            onClick={(id) => navigate(`/images/${id}`)}
           />
         ))}
       </Grid>

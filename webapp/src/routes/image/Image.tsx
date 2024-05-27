@@ -1,16 +1,13 @@
-import { BlurHashWrapper } from 'components/BlurHashWrapper';
-import { PaddingContainer } from 'components/PaddingContainer';
-import { ImageModel } from 'models/ImageModel';
 import { createContext, useEffect, useState } from 'react';
-import { useRouteMatch } from 'react-router';
-import ImageService from 'services/ImageService';
-import styled from 'styled-components';
-import { Details } from './Details';
-import { Overlay } from './Overlay';
 
-interface Match {
-  id: string;
-}
+import { BlurHashWrapper } from 'components/BlurHashWrapper';
+import { Details } from './Details';
+import { ImageModel } from 'models/ImageModel';
+import ImageService from 'services/ImageService';
+import { Overlay } from './Overlay';
+import { PaddingContainer } from 'components/PaddingContainer';
+import styled from 'styled-components';
+import { useParams } from 'react-router';
 
 const Image = styled(BlurHashWrapper)`
   width: 100%;
@@ -23,12 +20,13 @@ const Container = styled(PaddingContainer)`
 export const ImageContext = createContext({} as ImageModel);
 
 export const ImageRoute: React.FC = () => {
-  const match = useRouteMatch<Match>();
+  const { id } = useParams();
   const [image, setImage] = useState<ImageModel>();
 
   useEffect(() => {
-    ImageService.getMeta(match.params.id).then((image) => setImage(image));
-  }, [match, setImage]);
+    if (!id) return;
+    ImageService.getMeta(id).then((image) => setImage(image));
+  }, [id, setImage]);
 
   return (
     <Container>

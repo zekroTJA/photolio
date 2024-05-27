@@ -1,4 +1,4 @@
-import { Link, useHistory, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 import { Transition } from 'react-transition-group';
 import { WRAP_DISPLAY_BREAKPOINT } from 'static/static';
@@ -94,11 +94,11 @@ const ControlLink: React.FC<{ to: string; title: string }> = ({
 };
 
 export const Header: React.FC = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
 
   return (
     <Container>
-      <Icon onClick={() => history.push('/')}>
+      <Icon onClick={() => navigate('/')}>
         <h1>zekro</h1>
         <h2>Photography</h2>
       </Icon>

@@ -1,5 +1,5 @@
 import { DefaultTheme, createGlobalStyle } from 'styled-components';
-import { Route, BrowserRouter as Router } from 'react-router-dom';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 import { AboutRoute } from 'routes/about/About';
 import { ContactRoute } from 'routes/contact/Contact';
@@ -48,10 +48,12 @@ function App() {
         <Router>
           <PageContainer>
             <Header />
-            <Route exact path="/" component={HomeRoute} />
-            <Route exact path="/about" component={AboutRoute} />
-            <Route exact path="/contact" component={ContactRoute} />
-            <Route exact path="/images/:id" component={ImageRoute} />
+            <Routes>
+              <Route path="/" Component={HomeRoute} />
+              <Route path="/about" Component={AboutRoute} />
+              <Route path="/contact" Component={ContactRoute} />
+              <Route path="/images/:id" Component={ImageRoute} />
+            </Routes>
             <Footer />
           </PageContainer>
         </Router>
@@ -62,4 +64,3 @@ function App() {
 }
 
 export default App;
-
