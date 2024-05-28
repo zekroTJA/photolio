@@ -28,6 +28,14 @@ const Container = styled.div`
   gap: 1em;
   align-items: start;
   padding: 0 1em;
+
+  @media screen and (max-width: ${IMAGE_SIZE * 2 + IMAGE_MARGIN * 2}px) {
+    align-items: center;
+
+    img {
+      width: calc(100vw - 3em);
+    }
+  }
 `;
 
 const GroupContainer = styled.div`
