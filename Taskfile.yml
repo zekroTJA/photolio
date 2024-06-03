@@ -8,14 +8,16 @@ tasks:
     sources:
       - ./package.json
       - ./package-lock.json
-    cmd: npm install
+    cmds:
+      - npm install
 
   run-backend:
     aliases:
       - run
       - backend
       - b
-    cmd: cargo run
+    cmds:
+      - cargo run
 
   run-web:
     aliases:
@@ -24,4 +26,5 @@ tasks:
     deps:
       - deps-web
     dir: ./webapp
-    cmd: npm start
+    cmds:
+      - npm start

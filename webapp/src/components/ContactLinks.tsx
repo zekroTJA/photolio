@@ -1,4 +1,6 @@
+import { ALink } from './ALink';
 import { ReactComponent as IconDeviantart } from 'assets/deviantart.svg';
+import { ReactComponent as IconDiscord } from 'assets/discord.svg';
 import { ReactComponent as IconGithub } from 'assets/github.svg';
 import { ReactComponent as IconInstagram } from 'assets/instagram.svg';
 import { ReactComponent as IconMail } from 'assets/mail.svg';
@@ -7,8 +9,6 @@ import { ReactComponent as IconTiktok } from 'assets/tiktok.svg';
 import { ReactComponent as IconTwitter } from 'assets/twitter.svg';
 import { ReactComponent as IconUnsplash } from 'assets/unsplash.svg';
 import { ReactComponent as IconYoutube } from 'assets/youtube.svg';
-import { ReactComponent as IconDiscord } from 'assets/discord.svg';
-import { ALink } from './ALink';
 
 export const LinkMail = () => (
   <ALink href="mailto:contact@zekro.de">

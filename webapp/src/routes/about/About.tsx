@@ -1,10 +1,3 @@
-import { ALink } from 'components/ALink';
-import { PaddingContainer } from 'components/PaddingContainer';
-import { formatDistanceToNowStrict } from 'date-fns';
-import { WRAP_DISPLAY_BREAKPOINT } from 'static/static';
-import styled from 'styled-components';
-
-import { IconsList } from 'components/IconsList';
 import {
   LinkDeviantart,
   LinkGithub,
@@ -16,6 +9,13 @@ import {
   LinkUnsplash,
   LinkYoutube,
 } from 'components/ContactLinks';
+
+import { ALink } from 'components/ALink';
+import { IconsList } from 'components/IconsList';
+import { PaddingContainer } from 'components/PaddingContainer';
+import { WRAP_DISPLAY_BREAKPOINT } from 'static/static';
+import { formatDistanceToNowStrict } from 'date-fns';
+import styled from 'styled-components';
 
 const Image = styled.div<{ url: string }>`
   background-image: url(${(p) => p.url});
@@ -60,30 +60,24 @@ export const AboutRoute: React.FC = () => {
         <Image url="assets/avatar.jpg" />
         <h2>Hey 👋</h2>
         <p>
-          Thank you for being interested in my work! My name is Ringo (but I'm
-          also known as zekro) and I'm {AGE} old. I'm actually working as a
-          full-stack developer in germany, but in the middle of 2021, I
-          discovered photography as another passion of mine.
-        </p>
-        <p>
-          Years before, I was working a lot on digital design and web video
-          production. I created personal web designs for friends of mine (feel
-          free to discover some of them on my{' '}
-          <ALink href="https://www.deviantart.com/zekrotja">
-            DeviantArt profile
-          </ALink>
-          ). Also, all graphical designs for my{' '}
-          <ALink href="https://youtube.com/zekrommaster110">
-            YouTube channel
-          </ALink>{' '}
-          are completely self-made.
+          My name is Ringo (but I'm also known as zekro) and I'm {AGE} old.
+          Thank you for being interested in my work! I'm actually working as a{' '}
+          <ALink href="https://github.com/zekrotja">backend developer</ALink> in
+          germany, but in the middle of 2021, I discovered photography as
+          another passion of mine.
         </p>
         <p>
           Now, I primarily focus on expressing myself, my feelings and my
           perspectives in photography and photo editing. As you can see in my
           Work, I'm mainly interested in street photography but I am really
           excited to discover and getting into more topics like portrait, car,
-          architecture and wildlife photography in the future.
+          architecture and wildlife photography in the future Now, I am
+          primarily focussed on capturing great moments around the world,
+          expressing my point of view and generally learning new stuff in the
+          world of photography. As you can see, I am currently mostly interested
+          in wildlife, nature, architectural and street photography, but I also
+          want to discover many more topics like portrait, car, event or astro
+          photography.
         </p>
         <h2>Get to know me ✉️</h2>
         <IconsList>

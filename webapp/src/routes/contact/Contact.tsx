@@ -37,8 +37,8 @@ const ContactMe = () => (
       <LinkDiscord />
     </IconsList>
     <p>
-      If you really want, you can also send me a mail to{' '}
-      <Embed>contact@zekro.de</Embed>, but I might be slow to respond. 😅
+      If you prefer, you can also send me a mail to{' '}
+      <Embed>contact@zekro.de</Embed>.
     </p>
     <IconsList>
       <LinkMail />
