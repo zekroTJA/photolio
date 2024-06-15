@@ -16,8 +16,7 @@ const GRID_BREAKPOINTS = (() => {
     default: MAX_COLUMNS,
   };
   for (let i = 1; i <= MAX_COLUMNS; i++)
-    breakpoints[i * (IMAGE_SIZE + 2 * IMAGE_MARGIN) + CONTAINER_PADDING * 2] =
-      i - 1;
+    breakpoints[i * (IMAGE_SIZE + 2 * IMAGE_MARGIN)] = i - 1;
   return breakpoints;
 })();
 
@@ -27,8 +26,10 @@ const Container = styled.div`
   gap: 1em;
   align-items: start;
   padding: 0 1em;
+  width: fit-content;
+  margin: 0 auto;
 
-  @media screen and (max-width: ${IMAGE_SIZE * 2 + IMAGE_MARGIN * 2}px) {
+  @media screen and (max-width: ${IMAGE_SIZE * 2 + IMAGE_MARGIN}px) {
     align-items: center;
 
     img {
@@ -51,6 +52,10 @@ const Grid = styled(Masonry)`
   display: flex;
   justify-content: start;
   gap: ${IMAGE_MARGIN}px;
+
+  > div {
+    width: fit-content !important;
+  }
 `;
 
 const ImageContainer = styled.div`
