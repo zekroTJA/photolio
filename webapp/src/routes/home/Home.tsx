@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
-
 import { BlurHashWrapper } from 'components/BlurHashWrapper';
 import { ImageModel } from 'models/ImageModel';
 import ImageService from 'services/ImageService';
 import Masonry from 'react-masonry-css';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router';
+import { NavLink } from 'react-router-dom';
 
 const IMAGE_SIZE = 250;
-const IMAGE_MARGIN = 5;
+const IMAGE_MARGIN = 20;
 const CONTAINER_PADDING = 10;
 const MAX_COLUMNS = 5;
 
@@ -45,21 +44,17 @@ const GroupContainer = styled.div`
     opacity: 0.6;
     font-weight: 300;
     font-size: 1.2rem;
-    padding-left: ${IMAGE_MARGIN}px;
   }
 `;
 
 const Grid = styled(Masonry)`
   display: flex;
   justify-content: start;
+  gap: ${IMAGE_MARGIN}px;
+`;
 
-  > div {
-    width: fit-content !important;
-
-    > * {
-      margin: ${IMAGE_MARGIN}px;
-    }
-  }
+const ImageContainer = styled.div`
+  margin-bottom: ${IMAGE_MARGIN}px;
 `;
 
 type ImageGroups = [string, ImageModel[]][];
@@ -91,7 +86,6 @@ const groupImages = (images: ImageModel[]) => {
 
 export const HomeRoute: React.FC = () => {
   const [images, setImages] = useState<ImageGroups>();
-  const navigate = useNavigate();
 
   useEffect(() => {
     ImageService.list().then((images) => setImages(groupImages(images)));
@@ -102,13 +96,16 @@ export const HomeRoute: React.FC = () => {
       <h2>{heading || <>&nbsp;</>}</h2>
       <Grid className="" breakpointCols={GRID_BREAKPOINTS}>
         {images.map((img) => (
-          <BlurHashWrapper
-            key={img.id}
-            image={img}
-            width={IMAGE_SIZE}
-            imageURL={ImageService.getThumbnailSource(img.id, IMAGE_SIZE)}
-            onClick={(id) => navigate(`/images/${id}`)}
-          />
+          <ImageContainer>
+            <NavLink to={`/images/${img.id}`}>
+              <BlurHashWrapper
+                key={img.id}
+                image={img}
+                width={IMAGE_SIZE}
+                imageURL={ImageService.getThumbnailSource(img.id, IMAGE_SIZE)}
+              />
+            </NavLink>
+          </ImageContainer>
         ))}
       </Grid>
     </GroupContainer>

@@ -14,7 +14,7 @@ interface OptDimensions {
 }
 
 interface Events {
-  onClick?: (id: string) => void;
+  onClick?: (e: React.MouseEvent, id: string) => void;
 }
 
 type Props = ImageProps &
@@ -78,7 +78,7 @@ export const BlurHashWrapper: React.FC<Props> = ({
       : null;
 
   return (
-    <Container onClick={() => onClick?.call(this, image.id)}>
+    <Container onClick={(e) => onClick?.call(this, e, image.id)}>
       <img
         src={imageURL}
         width={width}
