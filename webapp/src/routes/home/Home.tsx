@@ -8,7 +8,6 @@ import { NavLink } from 'react-router-dom';
 
 const IMAGE_SIZE = 250;
 const IMAGE_MARGIN = 20;
-const CONTAINER_PADDING = 10;
 const MAX_COLUMNS = 5;
 
 const GRID_BREAKPOINTS = (() => {
