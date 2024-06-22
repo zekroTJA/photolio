@@ -1,8 +1,11 @@
+import { PAGE_CONTAINER_MAX_WIDTH } from 'static/static';
 import styled from 'styled-components';
 
 export const PageContainer = styled.div`
   position: relative;
-  max-width: 1300px;
+  display: flex;
+  flex-direction: column;
+  max-width: ${PAGE_CONTAINER_MAX_WIDTH};
   min-height: 100vh;
   margin: 0 auto;
   padding-top: 20px;

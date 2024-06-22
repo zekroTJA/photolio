@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
+
 import { BlurHashWrapper } from 'components/BlurHashWrapper';
 import { ImageModel } from 'models/ImageModel';
 import ImageService from 'services/ImageService';
 import Masonry from 'react-masonry-css';
-import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
+import styled from 'styled-components';
 
-const IMAGE_SIZE = 250;
+const IMAGE_WIDTH = 250;
 const IMAGE_MARGIN = 20;
 const MAX_COLUMNS = 5;
 
@@ -15,7 +16,7 @@ const GRID_BREAKPOINTS = (() => {
     default: MAX_COLUMNS,
   };
   for (let i = 1; i <= MAX_COLUMNS; i++)
-    breakpoints[i * (IMAGE_SIZE + 2 * IMAGE_MARGIN)] = i - 1;
+    breakpoints[i * (IMAGE_WIDTH + 2 * IMAGE_MARGIN)] = i - 1;
   return breakpoints;
 })();
 
@@ -28,7 +29,7 @@ const Container = styled.div`
   width: fit-content;
   margin: 0 auto;
 
-  @media screen and (max-width: ${IMAGE_SIZE * 2 + IMAGE_MARGIN}px) {
+  @media screen and (max-width: ${IMAGE_WIDTH * 2 + IMAGE_MARGIN}px) {
     align-items: center;
 
     img {
@@ -105,8 +106,8 @@ export const HomeRoute: React.FC = () => {
               <BlurHashWrapper
                 key={img.id}
                 image={img}
-                width={IMAGE_SIZE}
-                imageURL={ImageService.getThumbnailSource(img.id, IMAGE_SIZE)}
+                width={IMAGE_WIDTH}
+                imageURL={ImageService.getThumbnailSource(img.id, IMAGE_WIDTH)}
               />
             </NavLink>
           </ImageContainer>

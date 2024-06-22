@@ -5,13 +5,13 @@ export type ImageModel = {
   timestamp: string;
   blurhash: BlurHash;
   dimensions: Dimensions;
+  ratio: number;
   exif?: ExifModel;
 };
 
 export type Dimensions = {
   width: number;
   height: number;
-  ratio: number;
 };
 
 export type BlurHash = {

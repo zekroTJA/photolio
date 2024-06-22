@@ -26,7 +26,6 @@ type Props = ImageProps &
 
 interface ContainerProps {
   state: string;
-  clickable: boolean;
 }
 
 const BlurhashContainer = styled(Blurhash)<ContainerProps>`
@@ -35,7 +34,6 @@ const BlurhashContainer = styled(Blurhash)<ContainerProps>`
   left: 0;
   transition: opacity 0.25s ease;
   opacity: ${(p) => (p.state === 'exited' ? 0 : 1)};
-  cursor: ${(p) => (p.clickable ? 'pointer' : 'auto')};
 `;
 
 const Container = styled.div`
@@ -64,25 +62,24 @@ export const BlurHashWrapper: React.FC<Props> = ({
   imageURL,
   height,
   width,
-  onClick,
 }) => {
   const [loaded, setLoaded] = useState(false);
 
   const calcHeight =
-    !height && typeof width === 'number'
-      ? Math.floor(width! * (1 / image.dimensions.ratio))
+    !height && width && typeof width === 'number'
+      ? Math.floor(width * (1 / image.ratio))
       : null;
   const calcWidth =
-    !width && typeof width === 'number'
-      ? Math.floor(width! * image.dimensions.ratio)
+    !width && height && typeof height === 'number'
+      ? Math.floor(height * image.ratio)
       : null;
 
   return (
-    <Container onClick={(e) => onClick?.call(this, e, image.id)}>
+    <Container>
       <img
         src={imageURL}
-        width={width}
-        height={height}
+        width={width ?? calcWidth ?? '100%'}
+        height={height ?? calcHeight ?? '100%'}
         onLoad={() => setLoaded(true)}
         alt=""
       />
@@ -95,7 +92,6 @@ export const BlurHashWrapper: React.FC<Props> = ({
             resolutionX={image.blurhash.components.width}
             resolutionY={image.blurhash.components.height}
             state={state}
-            clickable={!!onClick}
           />
         )}
       </Transition>

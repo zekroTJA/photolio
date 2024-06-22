@@ -1,18 +1,17 @@
-import { format } from 'date-fns';
 import React, { useContext } from 'react';
-import styled from 'styled-components';
+
 import { ImageContext } from './Image';
+import { format } from 'date-fns';
+import styled from 'styled-components';
+
+type Props = { textAlign: string };
 
 type Optional<T> = T | undefined;
 
-const Container = styled.div`
-  margin-top: 20px;
-  text-align: center;
+const Container = styled.div<{ textAlign: string }>`
+  text-align: ${({ textAlign }) => textAlign};
   font-family: 'Montserrat', sans-serif;
-
-  > p {
-    margin: 0 0 10px 0;
-  }
+  line-height: 1em;
 `;
 
 const Small = styled.p<{ italic?: boolean; light?: boolean }>`
@@ -27,11 +26,11 @@ const join = (sep: string, ...v: Optional<string>[]): string =>
 const prefix = (prefix: string, v: Optional<string>): Optional<string> =>
   !!v ? `${prefix}${v}` : undefined;
 
-export const Details: React.FC = () => {
+export const Details: React.FC<Props> = ({ textAlign }) => {
   const image = useContext(ImageContext);
 
   return (
-    <Container>
+    <Container textAlign={textAlign}>
       {(image.exif && (
         <div>
           <p>
