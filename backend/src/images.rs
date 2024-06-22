@@ -353,6 +353,10 @@ fn image_details(storage: &Storage, cache: &CacheDriver<Image>, id: &str) -> Res
         return Ok(None);
     };
 
+    let dimensions = Dimensions {
+        width: image.width(),
+        height: image.height(),
+    };
     let image = Image {
         id: id.to_string(),
         name: id.to_string(),
@@ -362,10 +366,8 @@ fn image_details(storage: &Storage, cache: &CacheDriver<Image>, id: &str) -> Res
             hash: b_hash,
             components: bh_dimensions,
         },
-        dimensions: Dimensions {
-            width: image.width(),
-            height: image.height(),
-        },
+        ratio: dimensions.ratio(),
+        dimensions,
         exif: ex,
     };
 

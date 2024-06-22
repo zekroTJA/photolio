@@ -39,6 +39,7 @@ pub struct Image {
     pub timestamp: DateTime<Utc>,
     pub blurhash: BlurHash,
     pub dimensions: Dimensions,
+    pub ratio: f32,
     pub exif: Option<Exif>,
 }
 
@@ -46,5 +47,11 @@ impl Image {
     pub fn with_group(mut self, group: Option<String>) -> Self {
         self.group = group;
         self
+    }
+}
+
+impl Dimensions {
+    pub fn ratio(&self) -> f32 {
+        self.width as f32 / self.height as f32
     }
 }
