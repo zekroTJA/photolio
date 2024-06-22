@@ -4,8 +4,9 @@ use log::{debug, info};
 use serde::{de::DeserializeOwned, Serialize};
 use std::{
     collections::HashMap,
-    fs::OpenOptions,
+    fs::{File, OpenOptions},
     io::{self, BufReader},
+    path::Path,
     sync::RwLock,
 };
 
@@ -36,12 +37,12 @@ where
     pub fn new_persistent(file_name: &str) -> io::Result<Self> {
         info!("Loading memory cache from diks");
 
-        let file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(file_name)?;
+        let file_path = Path::new(file_name);
+        let file = if file_path.exists() {
+            OpenOptions::new().read(true).write(true).open(file_path)
+        } else {
+            File::create_new(file_path)
+        }?;
         let reader = BufReader::new(file);
 
         let map: HashMap<String, T> = match serde_json::de::from_reader(reader) {
