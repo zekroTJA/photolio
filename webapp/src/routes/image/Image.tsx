@@ -49,11 +49,13 @@ export const ImageRoute: React.FC = () => {
       displayWidth = width;
       displayHeight = width / image.ratio;
     }
-    setDimensions({
+    const dimensions = {
       width: displayWidth,
       height: displayHeight,
       horizontal: width - displayWidth > 300,
-    });
+    };
+    console.debug({ dimensions: dimensions, bounding: { width, height } });
+    setDimensions(dimensions);
   }, [image, containerRef]);
 
   useEffect(() => {
