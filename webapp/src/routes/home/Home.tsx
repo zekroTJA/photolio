@@ -32,8 +32,10 @@ const Container = styled.div`
   @media screen and (max-width: ${IMAGE_WIDTH * 2 + IMAGE_MARGIN}px) {
     align-items: center;
 
-    img {
-      width: calc(100vw - 3em);
+    img,
+    canvas {
+      width: calc(100vw - 3em) !important;
+      height: 100%;
     }
   }
 `;
