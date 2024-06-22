@@ -1,11 +1,11 @@
-use std::io;
-use actix_web::{Error, get, HttpResponse, web};
-use actix_web::web::{Data, ServiceConfig};
 use crate::cache::CacheDriver;
 use crate::images;
 use crate::models::{DimensionsOpt, Image};
 use crate::storage::Storage;
 use crate::ws::util;
+use actix_web::web::{Data, ServiceConfig};
+use actix_web::{get, web, Error, HttpResponse};
+use std::io;
 
 #[get("")]
 async fn get_meta_list(
@@ -55,10 +55,11 @@ async fn get_image_thumbnail(
         dimensions.height.unwrap_or(0),
     );
 
-    let Some(mut res) = images::thumbnail(&storage, id.as_str(), width, height).map_err(util::map_err)?
-        else {
-            return Ok(HttpResponse::NotFound().finish());
-        };
+    let Some(mut res) =
+        images::thumbnail(&storage, id.as_str(), width, height).map_err(util::map_err)?
+    else {
+        return Ok(HttpResponse::NotFound().finish());
+    };
 
     let mut v = Vec::<u8>::new();
     io::copy(&mut res, &mut v)?;
