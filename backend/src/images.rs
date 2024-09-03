@@ -13,7 +13,6 @@ use log::{debug, error, info, warn};
 use once_cell::sync::OnceCell;
 use std::{
     io::{BufReader, Cursor, Read, Seek, SeekFrom},
-    ops::Deref,
     path::Path,
     sync::{mpsc::channel, Arc, Mutex},
 };
@@ -223,7 +222,7 @@ pub fn thumbnail(
 
     image
         .thumbnail(width, height)
-        .write_to(&mut buf, ImageFormat::Jpeg)?;
+        .write_to(&mut buf, ImageFormat::WebP)?;
 
     buf.seek(SeekFrom::Start(0))?;
     storage.store(THUMBNAILS_BUCKET, thumbnail_id.as_str(), &mut buf)?;
@@ -235,10 +234,10 @@ pub fn thumbnail(
 /// Returns `true` if the given path's extension matches one of the defined
 /// image file extensions.
 pub fn is_image(path: &Path) -> bool {
-    let Some(ext) = path.extension() else {
-        return false;
-    };
-    ["jpg", "jpeg", "tiff", "png", "webp", "gif"].contains(&ext.to_string_lossy().deref())
+    matches!(
+        path.extension().and_then(|v| v.to_str()),
+        Some("jpg" | "jpeg" | "tiff" | "png" | "webp" | "gif")
+    )
 }
 
 fn get_exif_field(exif_meta: &exif::Exif, tag: Tag) -> Option<String> {
@@ -250,14 +249,14 @@ fn get_exif_field(exif_meta: &exif::Exif, tag: Tag) -> Option<String> {
 fn image_reader<'a, R>(
     buf_data: &'a mut BufReader<R>,
     id: &str,
-) -> Result<image::io::Reader<&'a mut BufReader<R>>>
+) -> Result<image::ImageReader<&'a mut BufReader<R>>>
 where
     R: Read + Seek,
 {
     let image_format =
         image::ImageFormat::from_extension(Path::new(id).extension().unwrap_or_default());
 
-    let mut image_reader = image::io::Reader::new(buf_data);
+    let mut image_reader = image::ImageReader::new(buf_data);
     if let Some(format) = image_format {
         debug!("{{{id}}} Got format from ext");
         image_reader.set_format(format);
