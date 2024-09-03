@@ -5,6 +5,7 @@ use crate::storage::Storage;
 use crate::ws::util;
 use actix_web::web::{Data, ServiceConfig};
 use actix_web::{get, web, Error, HttpResponse};
+use file_format::FileFormat;
 use std::io;
 
 #[get("")]
@@ -39,9 +40,16 @@ async fn get_image(storage: Data<Storage>, id: web::Path<String>) -> Result<Http
     let Some(mut res) = images::data(&storage, id.as_str()).map_err(util::map_err)? else {
         return Ok(HttpResponse::NotFound().finish());
     };
+
     let mut v = Vec::<u8>::new();
     io::copy(&mut res, &mut v)?;
-    Ok(HttpResponse::Ok().body(v))
+
+    let format = FileFormat::from_bytes(&v);
+
+    Ok(HttpResponse::Ok()
+        .append_header(("Cache-Control", "public, max-age=604800, immutable"))
+        .append_header(("Content-Type", format.media_type()))
+        .body(v))
 }
 
 #[get("/{id}/thumbnail")]
@@ -63,8 +71,12 @@ async fn get_image_thumbnail(
 
     let mut v = Vec::<u8>::new();
     io::copy(&mut res, &mut v)?;
+
+    let format = FileFormat::from_bytes(&v);
+
     Ok(HttpResponse::Ok()
         .append_header(("Cache-Control", "public, max-age=604800, immutable"))
+        .append_header(("Content-Type", format.media_type()))
         .body(v))
 }
 
